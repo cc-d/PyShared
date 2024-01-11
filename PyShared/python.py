@@ -1,20 +1,16 @@
-import typing as TYPE
-from functools import wraps
+from typing import Optional as Opt, Union, Any, Generator, Iterable
 from random import choice, randint
-from shlex import split as shx_split
-from subprocess import CompletedProcess
-from subprocess import run as sp_run
-
-from .consts import ALPHANUMERIC_CHARS, ALPHANUMERIC_EXT_CHARS
+from pathlib import Path
 from .exceptions import NotPrintableError
+from .consts import ALPHANUMERIC_CHARS, ALPHANUMERIC_EXT_CHARS
 
 
 def ranstr(
     min_len: int = 16,
-    max_len: TYPE.Optional[int] = None,
-    chars: TYPE.Iterable = ALPHANUMERIC_CHARS,
+    max_len: Opt[int] = None,
+    chars: Iterable = ALPHANUMERIC_CHARS,
     as_generator: bool = False,
-) -> TYPE.Union[TYPE.Generator, str]:
+) -> Union[Generator, str]:
     """Generates str with random chars between min and max length
     Args:
         min_length (int) = 16: The length of the string.
@@ -32,28 +28,6 @@ def ranstr(
     return ''.join(choice(chars) for _ in range(str_len))
 
 
-def runcmd(
-    cmd: TYPE.Union[str, TYPE.List], output: bool = True, *args, **kwargs
-) -> TYPE.Optional[CompletedProcess]:
-    """Runs a single command in the shell with subprocess.run
-    Args:
-        cmd (Union[str, List]): The command to run in the shell.
-        output (bool): Whether or not to return the output of the command.
-            Defaults to True.
-    """
-    if isinstance(cmd, str):
-        cmd = shx_split(cmd)
-
-    if output:
-        return sp_run(
-            cmd, check=True, text=True, capture_output=True, *args, **kwargs
-        )
-    else:
-        sp_run(
-            cmd, check=False, text=False, capture_output=False, *args, **kwargs
-        )
-
-
 def safe_repr(obj):
     """Try and returns an objects repr, then str if err, then NotPrintableError
     error message if both fail
@@ -69,7 +43,7 @@ def safe_repr(obj):
 
 
 def default_repr(
-    obj: TYPE.Any,
+    obj: Any,
     join_attrs_on: str = ', ',
     attrs_format: str = "{attr_name}={safe_attr_repr}",
     repr_format: str = "{obj_name}({attributes})",
