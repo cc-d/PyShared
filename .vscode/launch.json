@@ -11,6 +11,8 @@
         "--cov-report=term-missing",
         "--cov-report=html",
         "-vv",
+        "-s",
+        "--full-trace",
         "tests.py"
       ],
       "console": "integratedTerminal"

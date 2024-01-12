@@ -2,7 +2,7 @@ class NotPrintableError(Exception):
     """Custom exception to be raised when both repr and str fail"""
 
     def __init__(self, obj, e_repr, e_str):
-        self.obj_type = type(obj).__name__
+        self.obj_type = type(obj)
         self.repr_exception = e_repr
         self.str_exception = e_str
         self.message = (

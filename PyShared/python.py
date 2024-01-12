@@ -70,13 +70,13 @@ def default_repr(
     # Otherwise, use dir() to gather potential attributes
     else:
         if isinstance(obj, int):
-            return 'int(%s)' % obj
+            return '%d' % obj
         elif isinstance(obj, float):
-            return 'float(%s)' % obj
+            return '%f' % obj
         elif isinstance(obj, str):
-            return 'str(%s)' % obj
+            return '%s' % repr(obj)
         elif isinstance(obj, set):
-            return 'set(%s)' % obj
+            return '%s' % obj
         elif isinstance(obj, (list, tuple, dict)):
             return str(obj)
 

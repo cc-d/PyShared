@@ -75,36 +75,10 @@ def test_noprint():
         mock_print.assert_called_once()
 
 
-##### python.py #####
-def test_runcmd():
-    result = runcmd("echo test", output=True)
-    assert isinstance(result, CompletedProcess)
-    assert result.stdout.strip() == "test"
-
-
-def test_runcmd_no_output():
-    result = runcmd("echo hi", output=False)
-    assert result is None
-
-
-def test_default_repr_different_objects():
-    assert "int(10)" == default_repr(10)
-    assert "[]" == default_repr([])
-    assert "{}" == default_repr({})
-    assert "()" == default_repr(())
-
-
-def test_safe_repr():
-    assert safe_repr(123) == '123'
-
-
-class TestObject:
-    pass
-
-
-def test_default_repr():
-    obj = TestObject()
-    assert "TestObject" in default_repr(obj)
+def test_get_terminal_width_os_error():
+    with patch('os.get_terminal_size', side_effect=OSError):
+        width = get_terminal_width()
+        assert width == 80  # Assuming 80 is the default width set
 
 
 ##### env.py #####
@@ -171,3 +145,101 @@ def test_typed_evar_exception():
     ev = ranstr(32)
     os.environ[ev] = 'invalid'
     typed_evar(ev, default=_err)
+
+
+##### exceptions.py #####
+
+
+def test_NotPrintableError():
+    class Dummy:
+        d = 'dumb'
+
+    np = NotPrintableError(Dummy(), Exception('repr'), Exception('str'))
+    assert np.obj_type == type(Dummy())
+
+
+##### python.py #####
+def test_ranstr_generator():
+    _len = 10
+    _gen = ranstr(_len, as_generator=True)
+    assert type(_gen) == type((i for i in range(1)))
+
+
+def test_runcmd_no_output():
+    result = runcmd("echo hi", output=False)
+    assert result is None
+
+
+def test_default_repr_different_objects():
+    assert "%d" % 10 == default_repr(10)
+    assert "[]" == default_repr([])
+    assert "{}" == default_repr({})
+    assert "()" == default_repr(())
+    assert "%f" % 10.0 == default_repr(10.0)
+    assert repr('one1') == default_repr('one1')
+    assert "{1,2,3}" == default_repr({1, 2, 3}).replace(" ", "")
+
+
+def test_safe_repr():
+    assert safe_repr(123) == '123'
+
+
+def test_safe_repr_except():
+    class Dummy:
+        def __repr__(self):
+            raise Exception('test')
+
+    safe = safe_repr(Dummy())
+    safe_err = NotPrintableError(Dummy(), Exception('test'), Exception('test'))
+    assert safe == safe_err.message
+
+
+class TestObject:
+    pass
+
+
+def test_default_repr():
+    obj = TestObject()
+    assert "TestObject" in default_repr(obj)
+
+
+def test_runcmd():
+    result = runcmd("echo test", output=True)
+    assert isinstance(result, CompletedProcess)
+    assert result.stdout.strip() == "test"
+
+
+def test_attr_str():
+    class TestObject:
+        def __init__(self):
+            self.a = 1
+            self.b = 2
+            self.c = 3
+
+    obj = TestObject()
+    assert 'TestObject(a=1, b=2, c=3)' == default_repr(obj)
+
+
+def test_default_repr_no_dict():
+    class TestClass:
+        def __init__(self):
+            self.test_attr = "value"
+
+    obj = TestClass()
+    assert 'TestClass(test_attr=' in default_repr(
+        obj, repr_format="{obj_name}({attributes})"
+    )
+
+
+class CustomSlotObject:
+    __slots__ = ['a', 'b']
+
+    def __init__(self):
+        self.a = 1
+        self.b = 2
+
+
+def test_default_repr_for_custom_slot_object():
+    obj = CustomSlotObject()
+    repr_str = default_repr(obj)
+    assert "CustomSlotObject(a=1, b=2)" == repr_str
