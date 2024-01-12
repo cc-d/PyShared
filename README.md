@@ -2,6 +2,18 @@
 
 PyShared is a personal Python utility library that I use in my projects containing a collection of consts/functions/classes/etc that I have found useful across multiple codebases.
 
+## Installation
+
+```bash
+pip install pyshared
+```
+
+for the lib, for the dev dependencies:
+
+```bash
+pip install pyshared[dev]
+```
+
 ## `consts.py`
 
 - `ALPHANUMERIC_CHARS`: Import this constant for a string of all alphanumeric characters.

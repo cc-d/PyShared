@@ -19,7 +19,7 @@ dev = [
 
 [project]
 name = "pyshared"
-version = "0.2.1"
+version = "1.0.0"
 authors = [{name = "Cary Carter", email = "ccarterdev@gmail.com"}]
 description = "A Python library containing common utility functions for use across multiple codebases, filling gaps not covered by the standard Python libraries."
 readme = "README.md"
