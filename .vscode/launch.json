@@ -6,7 +6,13 @@
       "type": "python",
       "request": "launch",
       "module": "pytest",
-      "args": ["--cov=pyshared", "--cov-report=term", "tests.py"],
+      "args": [
+        "--cov=pyshared",
+        "--cov-report=term-missing",
+        "--cov-report=html",
+        "-vv",
+        "tests.py"
+      ],
       "console": "integratedTerminal"
     }
   ]

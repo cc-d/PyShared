@@ -122,6 +122,9 @@ def test_typed_evar_novar():
     # no evar set and no default specified
     assert typed_evar(evname) is None
 
+    os.environ[evname] = 'true'
+    assert typed_evar(evname) is True
+
 
 def test_typed_evar_var_floatint():
     # int
@@ -159,3 +162,12 @@ def test_typed_evar_var_bool():
     os.environ[ev] = 'invalid'
     with pt.raises(ValueError):
         typed_evar(ev, default=True)
+
+
+def test_typed_evar_exception():
+    def _err():
+        raise Exception('test')
+
+    ev = ranstr(32)
+    os.environ[ev] = 'invalid'
+    typed_evar(ev, default=_err)
