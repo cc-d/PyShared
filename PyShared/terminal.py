@@ -65,5 +65,8 @@ def print_columns(
             curline = ""
         else:
             curline += curobj
+    if curline:
+        print(curline)
+        printed.append(curline)
 
     return printed

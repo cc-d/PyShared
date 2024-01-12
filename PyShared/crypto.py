@@ -1,34 +1,47 @@
 import base64 as b64
 from typing import Union
+import json
+
+
+def _pad(s: str) -> str:
+    """
+    Pad a string with '=' to make it base64 decodable.
+    Args:
+        s (str): Input string.
+    Returns:
+        str: The padded string.
+    """
+    padding = len(s) % 4
+    return s if padding == 0 else s + '=' * (4 - padding)
 
 
 def is_jwt(s: Union[str, bytes]) -> bool:
-    """Check if a string is a valid JWT (JSON Web Token).
+    """
+    Check if a string is a valid JWT (JSON Web Token).
     Args:
-        s (Union[str, bytes]): Input suspected jwt bytes or string.
+        s (Union[str, bytes]): Input suspected JWT bytes or string.
     Returns:
         bool: True if the input is a valid JWT, False otherwise.
     """
-    # If the input is bytes, try to decode it as UTF-8
-    if isinstance(s, bytes):
-        try:
+    try:
+        if isinstance(s, bytes):
             s = s.decode('utf-8')
-        except UnicodeDecodeError:
+
+        segments = s.split('.')
+        if len(segments) != 3:
             return False
 
-    parts = s.split('.')
+        # Decoding header and payload to check if they are valid JSON
+        header, payload, signature = segments
+        json.loads(b64.urlsafe_b64decode(_pad(header)).decode('utf-8'))
+        json.loads(b64.urlsafe_b64decode(_pad(payload)).decode('utf-8'))
 
-    # A valid JWT should have exactly three parts separated by dots
-    if len(parts) != 3:
-        return False
+        # Rudimentary check for signature length
+        if (
+            len(signature) < 10
+        ):  # Minimum length for a JWT signature is typically more than 10 characters
+            return False
 
-    try:
-        for part in parts:
-            # Ensure that the part has proper padding to be a valid base64 string
-            while len(part) % 4 != 0:
-                part += '='
-            # Attempt to decode the part as base64
-            b64.urlsafe_b64decode(part)
-    except ValueError:
+        return True
+    except Exception:
         return False
-    return True

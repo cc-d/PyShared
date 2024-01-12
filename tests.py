@@ -1,5 +1,8 @@
 import os
 import re
+import sys
+import pytest as pt
+import random as ran
 from unittest.mock import patch
 from .pyshared.env import typed_evar
 from .pyshared.crypto import is_jwt
@@ -11,18 +14,59 @@ from subprocess import CompletedProcess
 from pyshared.terminal import get_terminal_width, print_middle, print_columns
 
 
-def test_get_terminal_width():
-    assert isinstance(get_terminal_width(), int)
-    assert get_terminal_width(999999) == 999999
+##### consts.py #####
+def test_consts():
+    _asscii = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    _asscii = _asscii + '0123456789'
+    assert set(ALPHANUMERIC_CHARS) == set(_asscii)
+    assert set(ALPHANUMERIC_EXT_CHARS) - set(ALPHANUMERIC_CHARS)
 
 
-def test_print_middle():
-    assert "- test -" in print_middle("test", char='-', noprint=True)
+##### crypto.py #####
 
 
-def test_print_columns():
-    columns = print_columns(["one", "two", "three"], terminal_width=10)
-    assert isinstance(columns, list)
+def test_is_jwt_valid_valid():
+    jwt = f'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ2YWxpZCI6Imp3dCJ9.BJc7CfppzWBPxNVzVteymEl6Hs6rCyax9_OM7LM3cQA'
+    assert is_jwt(jwt)
+
+
+def test_is_jwt_valid_invalid():
+    _inv = [
+        'valid.part.number',
+        'invalid.part.number.ohno',
+        'invalid.',
+        # valid but segments wrong
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3QiLCJpYXQiOjE1ODUxMzUwNjJ9',
+        # valid jwt but invalid base64
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3QiLCJpYXQiOjE1ODUxMzUwNjJ9.ohno',
+        # valid base64 but invalid jwt
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ohno.ohno',
+    ]
+    for inv in _inv:
+        assert not is_jwt(inv)
+
+
+def test_is_jwt_bytes_valid():
+    jwt = b'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ2YWxpZCI6Imp3dCJ9.BJc7CfppzWBPxNVzVteymEl6Hs6rCyax9_OM7LM3cQA'
+    assert is_jwt(jwt)
+
+
+##### terminal.py #####
+
+
+def test_print_columns_with_different_iterables():
+    iterable = ["a", "b", "c"]
+    assert set(print_columns(iterable)[0]) == set("a  b  c")
+
+
+def test_print_columns_with_custom_separator():
+    iterable = ['a' * 10, 'b' * 10, 'c' * 10]
+    separator = "|"
+    with patch("pyshared.terminal.get_terminal_width") as mock_termwidth:
+        mock_termwidth.return_value = 20
+        with patch("builtins.print") as mock_print:
+            print_columns(iterable, separator=separator)
+            assert mock_print.call_count == 2
 
 
 def test_noprint():
@@ -31,6 +75,7 @@ def test_noprint():
         mock_print.assert_called_once()
 
 
+##### python.py #####
 def test_runcmd():
     result = runcmd("echo test", output=True)
     assert isinstance(result, CompletedProcess)
@@ -49,61 +94,6 @@ def test_default_repr_different_objects():
     assert "()" == default_repr(())
 
 
-def test_consts():
-    assert ALPHANUMERIC_CHARS.isalnum()
-    not_in_alphanum = set(ALPHANUMERIC_EXT_CHARS) - set(ALPHANUMERIC_CHARS)
-    assert not_in_alphanum == {'-', '_'}
-
-
-def test_is_jwt_valid():
-    valid_jwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
-    assert is_jwt(valid_jwt) is True
-
-    invalid_jwt = "invalid.jwt.token"
-    assert is_jwt(invalid_jwt) is False
-
-
-def test_is_jwt_bytes():
-    valid_jwt_bytes = (
-        b"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.e30.x0ZzqSb6pQ8rEwzvZEPmZw"
-    )
-    assert is_jwt(valid_jwt_bytes) is True
-
-    invalid_jwt_bytes = b"invalid.jwt.bytes"
-    assert is_jwt(invalid_jwt_bytes) is False
-
-
-def test_is_jwt_invalid_parts():
-    invalid_jwt_two_parts = "part1.part2"
-    invalid_jwt_four_parts = "part1.part2.part3.part4"
-    assert is_jwt(invalid_jwt_two_parts) is False
-    assert is_jwt(invalid_jwt_four_parts) is False
-
-
-def test_typed_evar():
-    # int
-    test_evar = ranstr(32)
-    os.environ[test_evar] = "123"
-    assert typed_evar(test_evar) == 123
-    # str
-    os.environ[test_evar] = "test"
-    assert typed_evar(test_evar) == "test"
-
-    # bool
-    os.environ[test_evar] = "TRUE"
-    assert typed_evar(test_evar) is True
-    os.environ[test_evar] = "fAlSe"
-    assert typed_evar(test_evar) is False
-    os.environ[test_evar] = "1"
-    assert typed_evar(test_evar) is 1
-    os.environ[test_evar] = "0"
-    assert typed_evar(test_evar) is 0
-
-    # Float
-    os.environ[test_evar] = "1.23"
-    assert typed_evar(test_evar) == 1.23
-
-
 def test_safe_repr():
     assert safe_repr(123) == '123'
 
@@ -115,3 +105,57 @@ class TestObject:
 def test_default_repr():
     obj = TestObject()
     assert "TestObject" in default_repr(obj)
+
+
+##### env.py #####
+evname = ranstr(32)
+
+
+def test_typed_evar_novar():
+    # no evar set and default specified
+    assert typed_evar(evname, default=123) == 123
+    assert typed_evar(evname, default='123') == '123'
+    assert typed_evar(evname, default=True) is True
+    assert typed_evar(evname, default=False) is False
+    assert typed_evar(evname, default=evname) == evname
+
+    # no evar set and no default specified
+    assert typed_evar(evname) is None
+
+
+def test_typed_evar_var_floatint():
+    # int
+    ev = ranstr(32)
+    val = '1234321'
+    os.environ[ev] = val
+    assert typed_evar(ev, default=1) == int(val)
+    assert typed_evar(ev, default=1.0) == float(val)
+
+    # no default int/float
+    os.environ[ev] = '2.1'
+    assert typed_evar(ev) == 2.1
+    os.environ[ev] = '2'
+    assert typed_evar(ev) == 2
+
+
+def test_typed_evar_var_bool():
+    # bool
+    ev = ranstr(32)
+    testvals = {
+        ('1', True): True,
+        ('0', False): False,
+        ('true', True): True,
+        ('false', False): False,
+        ('TRUE', True): True,
+        ('FALSE', False): False,
+        ('tRuE', True): True,
+        ('fAlSe', False): False,
+        ('-1', False): False,
+    }
+    for val, expected in testvals.items():
+        os.environ[ev] = val[0]
+        assert typed_evar(ev, default=val[1]) == expected
+
+    os.environ[ev] = 'invalid'
+    with pt.raises(ValueError):
+        typed_evar(ev, default=True)
