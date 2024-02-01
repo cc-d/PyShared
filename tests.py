@@ -1,17 +1,19 @@
 import os
+import random as ran
 import re
 import sys
-import pytest as pt
-import random as ran
-from unittest.mock import patch
-from .pyshared.env import typed_evar
-from .pyshared.crypto import is_jwt
-from .pyshared import ALPHANUMERIC_CHARS, ALPHANUMERIC_EXT_CHARS
-from .pyshared.exceptions import NotPrintableError
-from .pyshared.python import ranstr, safe_repr, default_repr
-from pyshared.shell import runcmd
 from subprocess import CompletedProcess
-from pyshared.terminal import get_terminal_width, print_middle, print_columns
+from unittest.mock import patch
+
+import pytest as pt
+
+from .pyshared import ALPHANUMERIC_CHARS, ALPHANUMERIC_EXT_CHARS
+from .pyshared.crypto import is_jwt
+from .pyshared.env import typed_evar
+from .pyshared.exceptions import NotPrintableError
+from .pyshared.python import default_repr, ranstr, safe_repr, truncstr
+from .pyshared.shell import runcmd
+from .pyshared.terminal import get_terminal_width, print_columns, print_middle
 
 
 ##### consts.py #####
@@ -62,11 +64,11 @@ def test_print_columns_with_different_iterables():
 def test_print_columns_with_custom_separator():
     iterable = ['a' * 10, 'b' * 10, 'c' * 10]
     separator = "|"
-    with patch("pyshared.terminal.get_terminal_width") as mock_termwidth:
-        mock_termwidth.return_value = 20
-        with patch("builtins.print") as mock_print:
-            print_columns(iterable, separator=separator)
-            assert mock_print.call_count == 2
+    with patch("builtins.print") as mock_print:
+        print_columns(iterable, separator=separator, terminal_width=20)
+
+        assert mock_print.call_count == 2
+    print(mock_print.call_args_list, mock_print.call_count)
 
 
 def test_noprint():
@@ -243,3 +245,14 @@ def test_default_repr_for_custom_slot_object():
     obj = CustomSlotObject()
     repr_str = default_repr(obj)
     assert "CustomSlotObject(a=1, b=2)" == repr_str
+
+
+TESTSTR = 'a' * 100
+
+
+def test_truncstr_defaults():
+    assert truncstr(TESTSTR) == 'aaa...'
+
+
+def test_truncstr_args():
+    assert truncstr(TESTSTR, ellipsis='z', start_chars=1, end_chars=1) == 'aza'
