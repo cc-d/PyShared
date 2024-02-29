@@ -1,6 +1,10 @@
+import sys
+import os
+import os.path as op
 from typing import Optional as Opt, Union, Any, Generator, Iterable
 from random import choice, randint
 from pathlib import Path
+from importlib import reload, import_module
 from .exceptions import NotPrintableError
 from .consts import ALPHANUMERIC_CHARS, ALPHANUMERIC_EXT_CHARS
 
@@ -117,3 +121,28 @@ def truncstr(
     str_start = text[:start_chars]
     str_end = text[-end_chars:] if end_chars else ''
     return str_start + ellipsis + str_end
+
+
+def reload(module_name: str, *args, **kwargs) -> Any:
+    """Reload or import a module by name"""
+    if module_name in sys.modules:
+        module = sys.modules[module_name]
+        reload(module)
+    else:
+        module = import_module(module_name)
+    return module
+
+
+def objinfo(obj: Any, private: bool = False) -> str:
+    attrs = dir(obj)
+    if private:
+        attrs = [attr for attr in attrs if not attr.startswith('_')]
+    return default_repr(obj)
+
+
+def pyhistory(file_path: str = op.expanduser('~/.python_history')) -> None:
+    """because read_history_file() doesnt seem to work"""
+
+    with open(op.expanduser('~/.python_history'), 'r') as f:
+        lines = [l.replace('\\040', ' ') for l in f.read().splitlines()]
+        print('\n'.join(lines))

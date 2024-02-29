@@ -15,6 +15,8 @@ from .pyshared.python import default_repr, ranstr, safe_repr, truncstr
 from .pyshared.shell import runcmd
 from .pyshared.terminal import get_terminal_width, print_columns, print_middle
 
+from .pyshared.filesystem import safe_write
+
 
 ##### consts.py #####
 def test_consts():
@@ -256,3 +258,25 @@ def test_truncstr_defaults():
 
 def test_truncstr_args():
     assert truncstr(TESTSTR, ellipsis='z', start_chars=1, end_chars=1) == 'aza'
+
+
+@pt.fixture
+def _sw_file():
+    _file = '/tmp/safewrite'
+    yield _file
+    if os.path.exists(_file):
+        os.remove(_file)
+
+
+def test_safe_write(_sw_file):
+    safe_write(_sw_file, 'test')
+    assert os.path.exists(_sw_file)
+    with open(_sw_file, 'r') as f:
+        assert f.read() == 'test'
+    swfile = str(_sw_file + '2')
+    safe_write(swfile, 'test', permissions=0o600)
+    assert os.path.exists(swfile)
+    assert oct(os.stat(swfile).st_mode)[-3:] == '600'
+    with open(swfile, 'r') as f:
+        assert f.read() == 'test'
+    os.remove(swfile)
