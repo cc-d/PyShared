@@ -75,7 +75,7 @@ def default_repr(
     if isinstance(obj, int):
         return '%d' % obj
     elif isinstance(obj, float):
-        return '%f' % obj
+        return '%s' % repr(obj)
     elif isinstance(obj, str):
         return '%s' % repr(obj)
     elif isinstance(obj, set):
@@ -102,8 +102,8 @@ def default_repr(
 
 def truncstr(
     text: str,
-    ellipsis: str = '...',
     start_chars: int = 3,
+    ellipsis: str = '...',
     end_chars: Opt[int] = None,
 ) -> str:
     """Truncates a string using a provided ellipsis string.
@@ -118,6 +118,11 @@ def truncstr(
     Returns:
         str: The truncated string.
     """
+    # backwards compatability
+    if isinstance(start_chars, str) and isinstance(ellipsis, int):
+        ellipsis, start_chars = start_chars, ellipsis
+    if len(text) <= start_chars:
+        return text
     str_start = text[:start_chars]
     str_end = text[-end_chars:] if end_chars else ''
     return str_start + ellipsis + str_end
@@ -138,11 +143,3 @@ def objinfo(obj: Any, private: bool = False) -> str:
     if private:
         attrs = [attr for attr in attrs if not attr.startswith('_')]
     return default_repr(obj)
-
-
-def pyhistory(file_path: str = op.expanduser('~/.python_history')) -> None:
-    """because read_history_file() doesnt seem to work"""
-
-    with open(op.expanduser('~/.python_history'), 'r') as f:
-        lines = [l.replace('\\040', ' ') for l in f.read().splitlines()]
-        print('\n'.join(lines))
