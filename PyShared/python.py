@@ -1,7 +1,7 @@
 import sys
 import os
 import os.path as op
-from typing import Optional as Opt, Union, Any, Generator, Iterable
+from typing import Optional as Opt, Union, Any, Generator, Iterable, Union as U
 from random import choice, randint
 from pathlib import Path
 from importlib import reload, import_module
@@ -44,6 +44,27 @@ def safe_repr(obj):
         except Exception as e_str:
             err = NotPrintableError(obj, e_repr, e_str)
             return err.message
+
+
+def _simple_default_reprs(
+    obj: Any, simple_types: Iterable[type]
+) -> U[str, None]:
+    """Return a string representation of a simple Python object if possible,
+    otherwise return the same object.
+    ~obj (Any): The input Python object.
+    ~simple_types (Iterable[type]): The simple types check for and return
+    """
+    if isinstance(obj, int):
+        return '%d' % obj
+    elif isinstance(obj, float):
+        return '%s' % repr(obj)
+    elif isinstance(obj, str):
+        return '%s' % repr(obj)
+    elif isinstance(obj, set):
+        return '%s' % obj
+    elif isinstance(obj, (list, tuple, dict)):
+        return str(obj)
+    return obj
 
 
 def default_repr(
@@ -118,6 +139,7 @@ def truncstr(
     Returns:
         str: The truncated string.
     """
+    text = str(text)
     # backwards compatability
     if isinstance(start_chars, str) and isinstance(ellipsis, int):
         ellipsis, start_chars = start_chars, ellipsis

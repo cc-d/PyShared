@@ -177,7 +177,7 @@ def test_default_repr_different_objects():
     assert "[]" == default_repr([])
     assert "{}" == default_repr({})
     assert "()" == default_repr(())
-    assert "%f" % 10.0 == default_repr(10.0)
+    assert "%s" % 10.0 == default_repr(10.0)
     assert repr('one1') == default_repr('one1')
     assert "{1,2,3}" == default_repr({1, 2, 3}).replace(" ", "")
 
@@ -263,6 +263,7 @@ def test_truncstr_defaults():
         (TESTSTR, 100, '...', None, TESTSTR),
         (TESTSTR, 0, '|', 50, '|' + TESTSTR[:-50]),
         ('abcdefghijklmnopqrstuvwxyz', 5, '', 5, 'abcdevwxyz'),
+        (None, 1, '...', 1, 'N...e'),
     ],
 )
 def test_truncstr_args(tstr, start_chars, ellipsis, end_chars, expected):
