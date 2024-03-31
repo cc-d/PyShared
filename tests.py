@@ -2,6 +2,7 @@ import os
 import random as ran
 import re
 import sys
+import re
 from subprocess import CompletedProcess
 from unittest.mock import patch
 
@@ -14,6 +15,7 @@ from .pyshared.exceptions import NotPrintableError
 from .pyshared.python import default_repr, ranstr, safe_repr, truncstr
 from .pyshared.shell import runcmd
 from .pyshared.terminal import get_terminal_width, print_columns, print_middle
+from .pyshared.pytest import multiscope_fixture
 
 
 ##### consts.py #####
@@ -157,7 +159,7 @@ def test_NotPrintableError():
         d = 'dumb'
 
     np = NotPrintableError(Dummy(), Exception('repr'), Exception('str'))
-    assert np.obj_type == type(Dummy())
+    assert type(np.obj) == type(Dummy())
 
 
 ##### python.py #####
@@ -192,8 +194,10 @@ def test_safe_repr_except():
             raise Exception('test')
 
     safe = safe_repr(Dummy())
+    safe = re.sub(r'ID: \d+', 'ID: 0', safe)
     safe_err = NotPrintableError(Dummy(), Exception('test'), Exception('test'))
-    assert safe == safe_err.message
+    safe_err = re.sub(r'ID: \d+', 'ID: 0', safe_err.message)
+    assert safe == safe_err
 
 
 class TestObject:
@@ -219,7 +223,7 @@ def test_attr_str():
             self.c = 3
 
     obj = TestObject()
-    assert 'TestObject(a=1, b=2, c=3)' == default_repr(obj)
+    assert '<TestObject a=1, b=2, c=3>' == default_repr(obj)
 
 
 def test_default_repr_no_dict():
@@ -241,10 +245,20 @@ class CustomSlotObject:
         self.b = 2
 
 
-def test_default_repr_for_custom_slot_object():
+def test_default_repr_no_private():
     obj = CustomSlotObject()
     repr_str = default_repr(obj)
+    assert "<CustomSlotObject a=1, b=2>" == repr_str
+
+
+def test_default_repr_eval_format():
+    obj = CustomSlotObject()
+    repr_str = default_repr(obj, use_eval_format=True)
     assert "CustomSlotObject(a=1, b=2)" == repr_str
+
+
+def test_default_repr_None():
+    assert default_repr(None) == 'None'
 
 
 TESTSTR = 'a' * 100
@@ -268,3 +282,15 @@ def test_truncstr_defaults():
 )
 def test_truncstr_args(tstr, start_chars, ellipsis, end_chars, expected):
     assert truncstr(tstr, start_chars, ellipsis, end_chars) == expected
+
+
+@multiscope_fixture
+def fix():
+    return 1
+
+
+def test_multiscope_fixture(fix, fix_function, fix_module, fix_session):
+    assert fix == 1
+    assert fix_function == 1
+    assert fix_module == 1
+    assert fix_session == 1

@@ -1,7 +1,11 @@
-import sys
-import os
-import os.path as op
-from typing import Optional as Opt, Union, Any, Generator, Iterable, Union as U
+from typing import (
+    Optional as Opt,
+    Union,
+    Any,
+    Generator as Gen,
+    Iterable,
+    Union as U,
+)
 from random import choice, randint
 from pathlib import Path
 from importlib import reload, import_module
@@ -14,7 +18,7 @@ def ranstr(
     max_len: Opt[int] = None,
     chars: Iterable = ALPHANUMERIC_CHARS,
     as_generator: bool = False,
-) -> Union[Generator, str]:
+) -> Union[Gen, str]:
     """Generates str with random chars between min and max length
     Args:
         min_length (int) = 16: The length of the string.
@@ -46,32 +50,17 @@ def safe_repr(obj):
             return err.message
 
 
-def _simple_default_reprs(
-    obj: Any, simple_types: Iterable[type]
-) -> U[str, None]:
-    """Return a string representation of a simple Python object if possible,
-    otherwise return the same object.
-    ~obj (Any): The input Python object.
-    ~simple_types (Iterable[type]): The simple types check for and return
-    """
-    if isinstance(obj, int):
-        return '%d' % obj
-    elif isinstance(obj, float):
-        return '%s' % repr(obj)
-    elif isinstance(obj, str):
-        return '%s' % repr(obj)
-    elif isinstance(obj, set):
-        return '%s' % obj
-    elif isinstance(obj, (list, tuple, dict)):
-        return str(obj)
-    return obj
+_EVAL_FORMAT = '{obj_name}({attributes})'
+_REPR_FORMAT = '<{obj_name} {attributes}>'
+_ATTRS_FORMAT = '{attr_name}={attr_repr}'
 
 
 def default_repr(
     obj: Any,
+    use_eval_format: bool = False,
     join_attrs_on: str = ', ',
-    attrs_format: str = "{attr_name}={safe_attr_repr}",
-    repr_format: str = "{obj_name}({attributes})",
+    attrs_format: str = _ATTRS_FORMAT,
+    repr_format: str = _REPR_FORMAT,
     exclude_attrs: Opt[Iterable[str]] = None,
 ) -> str:
     """Return a string representation of a custom Python object.
@@ -79,30 +68,29 @@ def default_repr(
     reconstructed from the returned string, ideally. Complex objects
     may not be able to be reconstructed.
     Args:
+        use_eval_format (bool): If True, the repr will always be formatted as
+            as "Name(attr=value)" instead of "<Name attr=value>" or the
+            user-defined repr_format.
         obj (Any): The input Python object.
         attrs_join (str): The string to join the attributes with.
             Default: ", "
         attrs_format (str): The format string to use for each attribute.
-            Default: "{attr_name}={safe_attr_repr}"
+            Default: "{attr_name}={attr_repr}"
         repr_format (str): The format string to use for the object repr.
-            Default: "{obj_name}({attributes})"
+            Default: "<{obj_name} {attributes}>"
         exclude_attrs (Optional[Iterable[str]]): A list names of attributes
             to exclude from the repr.
-            Default: None
     Returns:
         str: The string representation of the object.
     """
     exclude_attrs = exclude_attrs or []
-    if isinstance(obj, int):
-        return '%d' % obj
-    elif isinstance(obj, float):
-        return '%s' % repr(obj)
-    elif isinstance(obj, str):
-        return '%s' % repr(obj)
-    elif isinstance(obj, set):
-        return '%s' % obj
-    elif isinstance(obj, (list, tuple, dict)):
-        return str(obj)
+    if use_eval_format:
+        repr_format = _EVAL_FORMAT
+
+    if obj is None:
+        return 'None'
+    elif isinstance(obj, (float, str, set, list, tuple, dict, int, bool)):
+        return repr(obj)
 
     # If the object has a __dict__ attribute, use that
     if hasattr(obj, '__dict__'):
@@ -110,7 +98,7 @@ def default_repr(
     else:
         attributes = {attr: getattr(obj, attr) for attr in dir(obj)}
     attributes = join_attrs_on.join(
-        attrs_format.format(attr_name=attr, safe_attr_repr=safe_repr(value))
+        attrs_format.format(attr_name=attr, attr_repr=safe_repr(value))
         for attr, value in attributes.items()
         if not hasattr(value, '__call__')
         and not str(attr).startswith('_')
@@ -148,20 +136,3 @@ def truncstr(
     str_start = text[:start_chars]
     str_end = text[-end_chars:] if end_chars else ''
     return str_start + ellipsis + str_end
-
-
-def reload(module_name: str, *args, **kwargs) -> Any:
-    """Reload or import a module by name"""
-    if module_name in sys.modules:
-        module = sys.modules[module_name]
-        reload(module)
-    else:
-        module = import_module(module_name)
-    return module
-
-
-def objinfo(obj: Any, private: bool = False) -> str:
-    attrs = dir(obj)
-    if private:
-        attrs = [attr for attr in attrs if not attr.startswith('_')]
-    return default_repr(obj)

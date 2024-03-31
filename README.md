@@ -1,83 +1,87 @@
-# PyShared: A Python Utility Library
+# PyShared
 
-PyShared is a personal Python utility library that I use in my projects containing a collection of consts/functions/classes/etc that I have found useful across multiple codebases.
+PyShared is a Python utility library providing a collection of functions and constants I've found useful across multiple projects.
 
 ## Installation
 
+To incorporate PyShared into your project, use pip for installation:
+
 ```bash
 pip install pyshared
-```
-
-for the lib, for the dev dependencies:
-
-```bash
+# To include development dependencies:
 pip install pyshared[dev]
 ```
 
-## `consts.py`
+## Feature Overview
 
-- `ALPHANUMERIC_CHARS`: Import this constant for a string of all alphanumeric characters.
-- `ALPHANUMERIC_EXT_CHARS`: Import this for an extended set of alphanumeric characters including underscores and hyphens.
+### `consts.py`
 
-```python
-from pyshared.consts import ALPHANUMERIC_CHARS, ALPHANUMERIC_EXT_CHARS
-```
+- `ALPHANUMERIC_CHARS`: A string of alphanumeric characters.
+- `ALPHANUMERIC_EXT_CHARS`: Alphanumeric characters, including underscores and hyphens.
 
-## `crypto.py`
+### `crypto.py`
 
-- `is_jwt`: Import this function to check if a given string is a valid JSON Web Token (JWT).
+- `is_jwt`: Verifies if a string is a valid JSON Web Token (JWT).
 
-## `env.py`
+### `env.py`
 
-- `typed_evar`: Import this function to fetch environment variables with automatic type casting based on a provided default value.
+- `typed_evar`: Retrieves and type-casts environment variables.
 
-## `exceptions.py`
+### `exceptions.py`
 
-- `NotPrintableError`: Import this custom exception class for use in scenarios where object representations fail.
+- `NotPrintableError`: Indicates failures in object string representation.
 
-## `python.py`
+### `python.py`
 
-- `ranstr`: Import this function to generate random strings.
-- `safe_repr`: Import this for a safe string representation of objects.
-- `default_repr`: Import this for a default string representation of custom Python objects.
-- `truncstr`: Import this for a truncated representation of the provided string.
+- `ranstr`: Creates random strings of specified length and character set.
+- `safe_repr`: Safely generates a string representation of any object.
+- `default_repr`: Generates a default representation for custom objects.
+- `truncstr`: Truncates a string, preserving a portion from the start and/or end.
 
-## `shell.py`
+### `pytest.py`
 
-- `runcmd`: Import this function to execute shell commands from within Python.
+- `multiscope_fixture`: Creates a fixture that can be used in multiple scopes.
 
-## `terminal.py`
+### `shell.py`
 
-- `get_terminal_width`: Import this to get the current width of the terminal.
-- `print_middle`: Import this for printing text centered in the terminal.
-- `print_columns`: Import this to neatly print items in columns according to the terminal width.
+Shell command execution within Python.
 
-These specific imports are designed to provide direct access to the functionalities within the PyShared package, aligning with my approach to efficient and reusable coding.
+- `runcmd`: Executes a command in the system shell.
+
+### `terminal.py`
+
+Terminal utilities for improved user interaction.
+
+- `get_terminal_width`: Detects the current width of the terminal.
+- `print_middle`: Centers text within the terminal width.
+- `print_columns`: Arranges a list of strings into columns fitted to the terminal width.
 
 ## Test Coverage
 
-**LITERALLY 100% LOL**
-
-Test Results:
+100% lol
 
 ```
 ---------- coverage: platform darwin, python 3.9.18-final-0 ----------
 Name                     Stmts   Miss  Cover   Missing
 ------------------------------------------------------
-pyshared/__init__.py         7      0   100%
+pyshared/__init__.py         9      0   100%
 pyshared/consts.py           3      0   100%
 pyshared/crypto.py          21      0   100%
 pyshared/env.py             26      0   100%
-pyshared/exceptions.py       7      0   100%
-pyshared/python.py          38      0   100%
+pyshared/exceptions.py       8      0   100%
+pyshared/pytest.py          11      0   100%
+pyshared/python.py          45      0   100%
 pyshared/shell.py            9      0   100%
 pyshared/terminal.py        34      0   100%
+pyshared/version.py          1      0   100%
 ------------------------------------------------------
-TOTAL                      145      0   100%
+TOTAL                      167      0   100%
 ```
-
-This comprehensive testing ensures that the library is reliable for production use.
 
 ## License
 
 MIT
+
+## Contact
+
+ccarterdev@gmail.com
