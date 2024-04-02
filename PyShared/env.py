@@ -1,56 +1,55 @@
 import os
-import typing as TYPE
+from typing import Union as U, Optional as Opt, Any as A
 
 
-def typed_evar(name: str, default: TYPE.Optional[TYPE.Any] = None):
+def typed_evar(
+    name: str, default: Opt[A] = None, vartype: U[type, A] = None
+) -> A:
     """Return an environment variable with an assumed type. Type from
     the default value, if provided, will be prioritized, otherwise
     the type will be inferred in order of: bool, int, float, str.
+    ~name (str): the environment variable name
+    ?default (Any): the default value if the environment variable is not set
+    ?vartype (type): override type assumption to attempt to cast to this type
 
     (CURDAY, 25) -> 25
     (CURDAY, 25.0) -> 25.0
     (CURDAY, '25.0') -> '25.0'
     (CURDAY, None) -> '25'
+    (CURDAY, None, int) -> 25
+    (CURDAY, None, float) -> 25.0
+    (CURDAY, None, bool) -> True
+    (CURDAY, None, Decimal) -> Decimal('25')
 
-    Args:
-        name (str): The name of the environment variable.
-        default (Optional[Any]): The default value of the environment variable.
-            Defaults to None.
-    Returns:
-        Any: The env var value with the assumed type.
     """
     varval = os.environ.get(name)
     if varval is None:
         return default
 
-    # use default's type
-    if default is not None:
-        vartype = type(default)
+    if vartype is not None:
+        return vartype(varval)
 
-        # bool gets special treatment
-        if vartype is bool:
-            if varval.lower() in ('1', 'true'):
+    _true = ('1', 'true', 'yes', 'on')
+    _false = ('0', 'false', 'no', 'off')
+
+    deftype = type(default) if default is not None else None
+    if deftype is not None:
+        if deftype is bool:
+            if varval.lower() in _true:
                 return True
-            elif varval.lower() in ('0', 'false', '-1'):
+            elif varval.lower() in _false:
                 return False
-            else:
-                raise ValueError(
-                    "Invalid boolean value for environment variable %s: %s"
-                    % (name, varval)
-                )
-        try:
-            return vartype(varval)
-        except Exception:
-            pass
+            raise ValueError('Invalid boolean value: %s' % varval)
+        return deftype(varval)
+
+    casevar = varval.casefold()
 
     # otherwise assume type using a few simple types
-    if varval.casefold() in ('true', 'false'):
-        return varval.casefold() == 'true'
-
-    for vartype in (int, float):
-        try:
-            return vartype(varval)
-        except ValueError:
-            continue
+    if casevar in ('1', 'true', 'false', '0'):
+        return True if casevar in _true else False
+    elif varval.isdigit():
+        return int(varval)
+    elif '.' in varval and len(varval.split('.', 1)) == 2:
+        return float(varval)
 
     return varval

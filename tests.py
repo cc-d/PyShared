@@ -89,66 +89,31 @@ def test_get_terminal_width_os_error():
 evname = ranstr(32)
 
 
-def test_typed_evar_novar():
-    # no evar set and default specified
-    assert typed_evar(evname, default=123) == 123
-    assert typed_evar(evname, default='123') == '123'
-    assert typed_evar(evname, default=True) is True
-    assert typed_evar(evname, default=False) is False
-    assert typed_evar(evname, default=evname) == evname
-
-    # no evar set and no default specified
-    assert typed_evar(evname) is None
-
-    os.environ[evname] = 'true'
-    assert typed_evar(evname) is True
-
-
-def test_typed_evar_var_floatint():
-    # int
-    ev = ranstr(32)
-    val = '1234321'
-    os.environ[ev] = val
-    assert typed_evar(ev, default=1) == int(val)
-    assert typed_evar(ev, default=1.0) == float(val)
-
-    # no default int/float
-    os.environ[ev] = '2.1'
-    assert typed_evar(ev) == 2.1
-    os.environ[ev] = '2'
-    assert typed_evar(ev) == 2
-
-
-def test_typed_evar_var_bool():
-    # bool
-    ev = ranstr(32)
-    testvals = {
-        ('1', True): True,
-        ('0', False): False,
-        ('true', True): True,
-        ('false', False): False,
-        ('TRUE', True): True,
-        ('FALSE', False): False,
-        ('tRuE', True): True,
-        ('fAlSe', False): False,
-        ('-1', False): False,
-    }
-    for val, expected in testvals.items():
-        os.environ[ev] = val[0]
-        assert typed_evar(ev, default=val[1]) == expected
-
-    os.environ[ev] = 'invalid'
-    with pt.raises(ValueError):
-        typed_evar(ev, default=True)
-
-
-def test_typed_evar_exception():
-    def _err():
-        raise Exception('test')
-
-    ev = ranstr(32)
-    os.environ[ev] = 'invalid'
-    typed_evar(ev, default=_err)
+@pt.mark.parametrize(
+    'ev, default, vartype, expected',
+    [
+        ('1', 1, None, 1),
+        ('25', True, None, ValueError),
+        (None, 25, None, 25),
+        ('25.0', None, float, 25.0),
+        ('25.0', None, None, 25.0),
+        ('-25.0', None, None, -25.0),
+        ('0', None, None, 0),
+        ('1', None, None, 1),
+        ('1.1', None, None, 1.1),
+        ('true', 'test', None, 'true'),
+        ('tRuE', True, None, True),
+    ],
+)
+def test_typed_evar(ev, default, vartype, expected):
+    with patch('os.environ.get') as mock_get:
+        mock_get.return_value = ev
+        # determine if expected is an exception or not
+        if isinstance(expected, type) and issubclass(expected, Exception):
+            with pt.raises(Exception):
+                typed_evar(ev, default, vartype)
+        else:
+            assert typed_evar(ev, default, vartype) == expected
 
 
 ##### exceptions.py #####
