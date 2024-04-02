@@ -21,7 +21,7 @@ pip install pyshared[dev]
 
 ### `crypto.py`
 
-- `is_jwt`: Verifies if a string is a valid JSON Web Token (JWT).
+- `is_jwt`: Simply verifies if a string looks like a JSON Web Token (JWT)
 
 ### `env.py`
 
@@ -29,18 +29,18 @@ pip install pyshared[dev]
 
 ### `exceptions.py`
 
-- `NotPrintableError`: Indicates failures in object string representation.
+- `NotPrintableError`: Both str and repr methods raised exceptions.
 
 ### `python.py`
 
 - `ranstr`: Creates random strings of specified length and character set.
-- `safe_repr`: Safely generates a string representation of any object.
+- `safe_repr`: Safely returns the object's repr/str or an error string without throwing exceptions if the object is not printable.
 - `default_repr`: Generates a default representation for custom objects.
 - `truncstr`: Truncates a string, preserving a portion from the start and/or end.
 
 ### `pytest.py`
 
-- `multiscope_fixture`: Creates a fixture that can be used in multiple scopes.
+- `multiscope_fixture`: Creates multiple scoped pytest fixture and ensures the fixtures are available in the module.
 
 ### `shell.py`
 
@@ -52,9 +52,9 @@ Shell command execution within Python.
 
 Terminal utilities for improved user interaction.
 
-- `get_terminal_width`: Detects the current width of the terminal.
-- `print_middle`: Centers text within the terminal width.
-- `print_columns`: Arranges a list of strings into columns fitted to the terminal width.
+- `get_terminal_width`: Safely retrieves the terminal width, defaulting to 80 columns on failure.
+- `print_middle`: Centers text within left/right padding based on terminal width.
+- `print_columns`: Arranges a list of strings into guestimated $x length strings based on what is approximately optimal for the contents/terminal width.
 
 ## Test Coverage
 

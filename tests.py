@@ -86,23 +86,23 @@ def test_get_terminal_width_os_error():
 
 
 ##### env.py #####
-evname = ranstr(32)
-
-
 @pt.mark.parametrize(
     'ev, default, vartype, expected',
     [
-        ('1', 1, None, 1),
-        ('25', True, None, ValueError),
-        (None, 25, None, 25),
-        ('25.0', None, float, 25.0),
-        ('25.0', None, None, 25.0),
-        ('-25.0', None, None, -25.0),
+        (None, 1, None, 1),
+        (None, 1.0, None, 1.0),
+        (None, '1', None, '1'),
+        (None, None, int, None),
+        (None, None, float, None),
+        (None, '20.1', int, '20.1'),
         ('0', None, None, 0),
-        ('1', None, None, 1),
-        ('1.1', None, None, 1.1),
-        ('true', 'test', None, 'true'),
-        ('tRuE', True, None, True),
+        ('0', True, None, False),
+        ('0', False, None, False),
+        ('0', 0, None, 0),
+        ('0', None, bool, True),
+        ('0', None, int, 0),
+        ('0', 1.0, float, 0.0),
+        ('0', None, float, 0.0),
     ],
 )
 def test_typed_evar(ev, default, vartype, expected):
