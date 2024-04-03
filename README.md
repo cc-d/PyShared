@@ -27,6 +27,36 @@ pip install pyshared[dev]
 
 - `typed_evar`: Retrieves and type-casts environment variables.
 
+Examples: (input, default, type, expected_output)
+
+```
+'evname, ev, default, vartype, expected',
+    # with default arg
+    ('evname', '0', 0, None, 0),
+    # this shouldnt ever happen but if it does, it should raise error
+    (None, None, '20.1', int, ValueError),
+    (None, None, None, float, ValueError),
+    # assumed typing
+    ('evname', '0.0', None, None, 0.0),
+    ('evname', '0.', None, None, '0.'),
+    ('evname', '.0', None, None, 0.0),
+    ('evname', 'True', None, None, True),
+    ('evname', 'tRuE', None, None, True),
+    ('evname', 'false', None, None, False),
+    ('evname', 'fAlSe', None, None, False),
+    ('evname', '0', None, None, 0),
+    ('evname', '0', True, None, False),
+    ('evname', '0', False, None, False),
+    ('evname', '0', None, bool, True),
+    ('evname', '0', None, int, 0),
+    ('evname', '0', 1.0, float, 0.0),
+    ('evname', '0', None, float, 0.0),
+    ('evname', 'true', None, str, 'true'),
+    ('evname', 'test', True, None, ValueError),
+    ('evname', 'test', None, int, ValueError),
+    ('evname', 'test', 1, None, ValueError),
+```
+
 ### `exceptions.py`
 
 - `NotPrintableError`: Both str and repr methods raised exceptions.

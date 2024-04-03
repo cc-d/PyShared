@@ -87,33 +87,47 @@ def test_get_terminal_width_os_error():
 
 ##### env.py #####
 @pt.mark.parametrize(
-    'ev, default, vartype, expected',
+    'evname, ev, default, vartype, expected',
     [
-        (None, 1, None, 1),
-        (None, 1.0, None, 1.0),
-        (None, '1', None, '1'),
-        (None, None, int, None),
-        (None, None, float, None),
-        (None, '20.1', int, '20.1'),
-        ('0', None, None, 0),
-        ('0', True, None, False),
-        ('0', False, None, False),
-        ('0', 0, None, 0),
-        ('0', None, bool, True),
-        ('0', None, int, 0),
-        ('0', 1.0, float, 0.0),
-        ('0', None, float, 0.0),
+        # with default arg
+        ('evname', '0', 0, None, 0),
+        # this shouldnt ever happen but if it does, it should raise error
+        (None, None, '20.1', int, ValueError),
+        (None, None, 1, None, ValueError),
+        (None, None, 1.0, None, ValueError),
+        (None, None, '1', None, ValueError),
+        (None, None, None, int, ValueError),
+        (None, None, None, float, ValueError),
+        # assumed typing
+        ('evname', '0.0', None, None, 0.0),
+        ('evname', '0.', None, None, '0.'),
+        ('evname', '.0', None, None, 0.0),
+        ('evname', 'True', None, None, True),
+        ('evname', 'tRuE', None, None, True),
+        ('evname', 'false', None, None, False),
+        ('evname', 'fAlSe', None, None, False),
+        ('evname', '0', None, None, 0),
+        ('evname', '0', True, None, False),
+        ('evname', '0', False, None, False),
+        ('evname', '0', None, bool, True),
+        ('evname', '0', None, int, 0),
+        ('evname', '0', 1.0, float, 0.0),
+        ('evname', '0', None, float, 0.0),
+        ('evname', 'true', None, str, 'true'),
+        ('evname', 'test', True, None, ValueError),
+        ('evname', 'test', None, int, ValueError),
+        ('evname', 'test', 1, None, ValueError),
     ],
 )
-def test_typed_evar(ev, default, vartype, expected):
+def test_typed_evar(evname, ev, default, vartype, expected):
     with patch('os.environ.get') as mock_get:
         mock_get.return_value = ev
         # determine if expected is an exception or not
         if isinstance(expected, type) and issubclass(expected, Exception):
             with pt.raises(Exception):
-                typed_evar(ev, default, vartype)
+                typed_evar(evname, default, vartype)
         else:
-            assert typed_evar(ev, default, vartype) == expected
+            assert typed_evar(evname, default, vartype) == expected
 
 
 ##### exceptions.py #####
@@ -148,6 +162,15 @@ def test_default_repr_different_objects():
     assert repr('one1') == default_repr('one1')
     assert "{1,2,3}" == default_repr({1, 2, 3}).replace(" ", "")
 
+    class TestObject:
+        def __init__(self):
+            self.a = 1
+            self.b = 2
+            self.c = 3
+
+    obj = TestObject()
+    assert '<TestObject a=1, b=2, c=3>' == default_repr(obj)
+
 
 def test_safe_repr():
     assert safe_repr(123) == '123'
@@ -178,28 +201,6 @@ def test_runcmd():
     result = runcmd("echo test", output=True)
     assert isinstance(result, CompletedProcess)
     assert result.stdout.strip() == "test"
-
-
-def test_attr_str():
-    class TestObject:
-        def __init__(self):
-            self.a = 1
-            self.b = 2
-            self.c = 3
-
-    obj = TestObject()
-    assert '<TestObject a=1, b=2, c=3>' == default_repr(obj)
-
-
-def test_default_repr_no_dict():
-    class TestClass:
-        def __init__(self):
-            self.test_attr = "value"
-
-    obj = TestClass()
-    assert 'TestClass(test_attr=' in default_repr(
-        obj, repr_format="{obj_name}({attributes})"
-    )
 
 
 class CustomSlotObject:

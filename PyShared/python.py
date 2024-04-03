@@ -104,9 +104,13 @@ def default_repr(
         and not str(attr).startswith('_')
         and attr not in exclude_attrs
     )
-    return repr_format.format(
-        obj_name=obj.__class__.__name__, attributes=attributes
-    )
+    obj_name = ''
+    if hasattr(obj, '__class__'):
+        if hasattr(obj.__class__, '__name__'):
+            obj_name = obj.__class__.__name__
+    if hasattr(obj, '__name__'):
+        obj_name += ' ' + obj.__name__
+    return repr_format.format(obj_name=obj_name, attributes=attributes)
 
 
 def truncstr(

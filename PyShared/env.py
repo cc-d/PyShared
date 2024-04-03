@@ -22,6 +22,9 @@ def typed_evar(
     (CURDAY, None, Decimal) -> Decimal('25')
 
     """
+    if name is None:
+        raise ValueError('Environment variable name cannot be None')
+
     varval = os.environ.get(name)
     if varval is None:
         return default
@@ -49,7 +52,12 @@ def typed_evar(
         return True if casevar in _true else False
     elif varval.isdigit():
         return int(varval)
-    elif '.' in varval and len(varval.split('.', 1)) == 2:
-        return float(varval)
+    elif '.' in varval:
+        spval = varval.split('.')
+        if len(spval) == 2:
+            if spval[0].isdigit() and spval[1].isdigit():
+                return float(varval)
+            elif spval[0] == '' and spval[1].isdigit():
+                return float(varval)
 
-    return varval
+    return str(varval)
