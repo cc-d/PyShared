@@ -2,6 +2,8 @@
 
 PyShared is a Python utility library providing a collection of functions and constants I've found useful across multiple projects.
 
+It also has several common aliases I use for typehints and common imports.
+
 ## Installation
 
 To incorporate PyShared into your project, use pip for installation:
