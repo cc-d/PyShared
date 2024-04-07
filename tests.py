@@ -121,6 +121,7 @@ def test_get_terminal_width_os_error():
         ('ev', 'tru', None, None, 'tru'),
         ('false', 'false', None, None, False),
         ('false', 'false', None, str, 'false'),
+        ('false', 1.1, None, None, ValueError),
     ],
 )
 def test_typed_evar(evname, ev, default, vartype, expected):
