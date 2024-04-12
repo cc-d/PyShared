@@ -88,6 +88,10 @@ Terminal utilities for improved user interaction.
 - `print_middle`: Centers text within left/right padding based on terminal width.
 - `print_columns`: Arranges a list of strings into guestimated $x length strings based on what is approximately optimal for the contents/terminal width.
 
+### `tests.py`
+
+- `RanData`: A class for generating random data for testing purposes.
+
 ## Test Coverage
 
 100% lol
