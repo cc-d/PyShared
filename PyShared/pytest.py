@@ -1,5 +1,7 @@
 import pytest as pt
 import inspect
+import random as ran
+
 from typing import Callable as Call
 
 _SCOPES = ['function', 'module', 'session']

@@ -9,6 +9,7 @@ from unittest.mock import patch
 import pytest as pt
 
 from .pyshared import ALPHANUMERIC_CHARS, ALPHANUMERIC_EXT_CHARS
+from .pyshared import RanData
 from .pyshared.crypto import is_jwt
 from .pyshared.env import typed_evar
 from .pyshared.exceptions import NotPrintableError
@@ -264,3 +265,16 @@ def test_multiscope_fixture(fix, fix_function, fix_module, fix_session):
     assert fix_function == 1
     assert fix_module == 1
     assert fix_session == 1
+
+
+def test_randata():
+    start = 0
+    end = 100
+
+    rd = RanData(range=(start, end))
+    assert rd.RANGE == (start, end)
+    assert all([start <= rd.int <= end for _ in range(end)])
+
+    for k, v in rd.TYPES.items():
+        print(k, v)
+        assert isinstance(rd[k], v)

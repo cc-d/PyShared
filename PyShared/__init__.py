@@ -30,3 +30,4 @@ from .python import default_repr, ranstr, safe_repr, truncstr
 from .shell import runcmd
 from .terminal import get_terminal_width, print_columns, print_middle
 from .pytest import multiscope_fixture
+from .test import RanData
