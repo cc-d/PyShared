@@ -18,6 +18,8 @@ from .pyshared.shell import runcmd
 from .pyshared.terminal import get_terminal_width, print_columns, print_middle
 from .pyshared.pytest import multiscope_fixture
 
+from .pyshared.args import parse_short, Cmd, Arg
+
 
 ##### consts.py #####
 def test_consts():
@@ -290,3 +292,56 @@ def test_no_eval_randata_getitem():
 
     # ensure it still works
     assert set(type(rd['int']) for _ in range(100)) == {int}
+
+
+# Data sets for testing the Arg class
+@pt.mark.parametrize(
+    "name, group, expected_aliases",
+    [
+        ("list", ["list", "add", "remote", "info"], {'l', '-l', '--l'}),
+        ("add", ["list", "add", "remote", "info"], {'a', '-a', '--a'}),
+        ("remote", ["list", "add", "remote", "info"], {'r', '-r', '--r'}),
+        ("info", ["list", "add", "remote", "info"], {'i', '-i', '--i'}),
+        ("push", ["push", "pull"], {'pus', '-pus', '--pus'}),
+        ("pull", ["push", "pull"], {'pul', '-pul', '--pul'}),
+    ],
+)
+def test_arg_aliases(name, group, expected_aliases):
+    arg = Arg(name, group)
+    assert set(arg.aliases) == expected_aliases
+
+
+# Data sets for testing the Cmd class with nested commands
+@pt.mark.parametrize(
+    "commands, expected_structure",
+    [
+        (
+            [{'remote': [{'push': []}, {'pull': []}]}],
+            {
+                'name': 'remote',
+                'aliases': {'r', '-r', '--r'},
+                'subcommands': [
+                    {'name': 'push', 'aliases': {'pus', '-pus', '--pus'}},
+                    {'name': 'pull', 'aliases': {'pul', '-pul', '--pul'}},
+                ],
+            },
+        ),
+        (
+            [{'info': []}],
+            {'name': 'info', 'aliases': {'i', '-i', '--i'}, 'subcommands': []},
+        ),
+    ],
+)
+def test_cmd_creation_with_subcommands(commands, expected_structure):
+    parsed_cmds = parse_short(commands)
+    assert parsed_cmds[0].name == expected_structure['name']
+    assert set(parsed_cmds[0].aliases) == expected_structure['aliases']
+    assert len(parsed_cmds[0].subcmds) == len(
+        expected_structure['subcommands']
+    )
+    for i, subcmd in enumerate(parsed_cmds[0].subcmds):
+        assert subcmd.name == expected_structure['subcommands'][i]['name']
+        assert (
+            set(subcmd.aliases)
+            == expected_structure['subcommands'][i]['aliases']
+        )

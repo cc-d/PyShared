@@ -22,6 +22,8 @@ from typing import (
 
 # custom imports
 from .version import __version__
+
+from .args import parse_short
 from .consts import ALPHANUMERIC_CHARS, ALPHANUMERIC_EXT_CHARS
 from .crypto import is_jwt
 from .env import typed_evar
