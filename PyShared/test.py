@@ -104,4 +104,4 @@ class RanData:
 
     def __getitem__(self, key: str):
         """Return the random data for the given type."""
-        return eval(f'self.{key}')
+        return getattr(self, key)

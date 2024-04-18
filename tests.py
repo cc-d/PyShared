@@ -278,3 +278,15 @@ def test_randata():
     for k, v in rd.TYPES.items():
         print(k, v)
         assert isinstance(rd[k], v)
+
+
+def test_no_eval_randata_getitem():
+    """regression for potential security issue too"""
+    rd = RanData()
+    with patch('builtins.print') as mock_print:
+        with pt.raises(AttributeError):
+            rd['int and print(1)']
+        mock_print.assert_not_called()
+
+    # ensure it still works
+    assert set(type(rd['int']) for _ in range(100)) == {int}
