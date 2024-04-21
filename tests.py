@@ -4,7 +4,7 @@ import re
 import sys
 import re
 from subprocess import CompletedProcess
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 import pytest as pt
 
@@ -13,12 +13,16 @@ from .pyshared import RanData
 from .pyshared.crypto import is_jwt
 from .pyshared.env import typed_evar
 from .pyshared.exceptions import NotPrintableError
-from .pyshared.python import default_repr, ranstr, safe_repr, truncstr
+from .pyshared.python import (
+    default_repr,
+    ranstr,
+    safe_repr,
+    truncstr,
+    tmp_pythonpath,
+)
 from .pyshared.shell import runcmd
 from .pyshared.terminal import get_terminal_width, print_columns, print_middle
 from .pyshared.pytest import multiscope_fixture
-
-from .pyshared.args import parse_short, Cmd, Arg
 
 
 ##### consts.py #####
@@ -294,54 +298,24 @@ def test_no_eval_randata_getitem():
     assert set(type(rd['int']) for _ in range(100)) == {int}
 
 
-# Data sets for testing the Arg class
-@pt.mark.parametrize(
-    "name, group, expected_aliases",
-    [
-        ("list", ["list", "add", "remote", "info"], {'l', '-l', '--l'}),
-        ("add", ["list", "add", "remote", "info"], {'a', '-a', '--a'}),
-        ("remote", ["list", "add", "remote", "info"], {'r', '-r', '--r'}),
-        ("info", ["list", "add", "remote", "info"], {'i', '-i', '--i'}),
-        ("push", ["push", "pull"], {'pus', '-pus', '--pus'}),
-        ("pull", ["push", "pull"], {'pul', '-pul', '--pul'}),
-    ],
-)
-def test_arg_aliases(name, group, expected_aliases):
-    arg = Arg(name, group)
-    assert set(arg.aliases) == expected_aliases
+TESTPATH = ['/tmp/1', '/tmp/2']
 
 
-# Data sets for testing the Cmd class with nested commands
 @pt.mark.parametrize(
-    "commands, expected_structure",
+    'tmppath, curpath, expected, strict',
     [
-        (
-            [{'remote': [{'push': []}, {'pull': []}]}],
-            {
-                'name': 'remote',
-                'aliases': {'r', '-r', '--r'},
-                'subcommands': [
-                    {'name': 'push', 'aliases': {'pus', '-pus', '--pus'}},
-                    {'name': 'pull', 'aliases': {'pul', '-pul', '--pul'}},
-                ],
-            },
-        ),
-        (
-            [{'info': []}],
-            {'name': 'info', 'aliases': {'i', '-i', '--i'}, 'subcommands': []},
-        ),
+        ('/tmp/3', TESTPATH, ['/tmp/3'] + TESTPATH, False),
+        ('/tmp/1', TESTPATH, ['/tmp/1'] + TESTPATH, False),
+        ('/tmp/1/2/3', TESTPATH, ['/tmp/1/2/3'] + TESTPATH, False),
+        ('/tmp/3', TESTPATH, ['/tmp/3'], True),
+        ('/tmp/1', TESTPATH, ['/tmp/1'], True),
+        ('/tmp/1/2/3', TESTPATH, ['/tmp/1/2/3'], True),
+        ('/tmp/1', TESTPATH, ['/tmp/1'] + TESTPATH, False),
     ],
 )
-def test_cmd_creation_with_subcommands(commands, expected_structure):
-    parsed_cmds = parse_short(commands)
-    assert parsed_cmds[0].name == expected_structure['name']
-    assert set(parsed_cmds[0].aliases) == expected_structure['aliases']
-    assert len(parsed_cmds[0].subcmds) == len(
-        expected_structure['subcommands']
-    )
-    for i, subcmd in enumerate(parsed_cmds[0].subcmds):
-        assert subcmd.name == expected_structure['subcommands'][i]['name']
-        assert (
-            set(subcmd.aliases)
-            == expected_structure['subcommands'][i]['aliases']
-        )
+def test_tmp_pythonpath(tmppath, curpath, expected, strict):
+    with patch('sys.path', curpath):
+        assert sys.path == curpath
+        with tmp_pythonpath(tmppath, strict=strict):
+            assert sys.path == expected
+        assert sys.path == curpath

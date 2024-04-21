@@ -1,16 +1,43 @@
+import os
+import os.path as op
+import sys
+from contextlib import contextmanager
+from importlib import import_module, reload
+from pathlib import Path
+from random import choice, randint
 from typing import (
+    Generator as Gen,
+    Iterable,
+    Iterator,
     Optional as Opt,
     Union,
     Any,
-    Generator as Gen,
-    Iterable,
-    Union as U,
 )
-from random import choice, randint
-from pathlib import Path
-from importlib import reload, import_module
-from .exceptions import NotPrintableError
+
 from .consts import ALPHANUMERIC_CHARS, ALPHANUMERIC_EXT_CHARS
+from .exceptions import NotPrintableError
+
+
+@contextmanager
+def tmp_pythonpath(path: Union[str, Path], strict: bool = False):
+    """Temporarily add a path to the Python path for this context.
+    ~path: The path to add to the Python path.
+    ~strict: If True, only the path will be in the Python path.
+    """
+    og_paths = sys.path.copy()
+    if strict:
+        sys.path = [str(path)]
+    else:
+        sys.path.insert(0, str(path))
+    try:
+        yield
+    finally:
+        sys.path.remove(str(path))
+        curpaths = sys.path.copy()
+        sys.path = og_paths
+        for i, p in enumerate(curpaths):
+            if p not in sys.path:
+                sys.path.insert(i, p)
 
 
 def ranstr(
