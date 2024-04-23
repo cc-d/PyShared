@@ -98,24 +98,25 @@ Terminal utilities for improved user interaction.
 
 ## Test Coverage
 
-100% lol
+not quite 100% lol
 
 ```
 ---------- coverage: platform darwin, python 3.9.18-final-0 ----------
 Name                     Stmts   Miss  Cover   Missing
 ------------------------------------------------------
-pyshared/__init__.py         9      0   100%
+pyshared/__init__.py        17      0   100%
 pyshared/consts.py           3      0   100%
 pyshared/crypto.py          21      0   100%
-pyshared/env.py             26      0   100%
+pyshared/env.py             34      3    91%   30, 42, 54
 pyshared/exceptions.py       8      0   100%
-pyshared/pytest.py          11      0   100%
-pyshared/python.py          45      0   100%
+pyshared/pytest.py          12      0   100%
+pyshared/python.py          69      3    96%   40, 63, 139
 pyshared/shell.py            9      0   100%
 pyshared/terminal.py        34      0   100%
+pyshared/test.py            54      0   100%
 pyshared/version.py          1      0   100%
 ------------------------------------------------------
-TOTAL                      167      0   100%
+TOTAL                      262      6    98%
 ```
 
 ## License
