@@ -31,8 +31,3 @@ from .python import default_repr, ranstr, safe_repr, truncstr, tmp_pythonpath
 from .shell import runcmd
 from .terminal import get_terminal_width, print_columns, print_middle
 from .test import RanData
-
-try:
-    from .pytest import multiscope_fixture
-except (ImportError, ModuleNotFoundError):
-    print("pytest not installed, skipping multiscope_fixture import")
