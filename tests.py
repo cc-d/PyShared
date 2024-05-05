@@ -319,3 +319,43 @@ def test_tmp_pythonpath(tmppath, curpath, expected, strict):
         with tmp_pythonpath(tmppath, strict=strict):
             assert sys.path == expected
         assert sys.path == curpath
+
+
+# Import the module/script where get_logger is defined
+
+from .pyshared.log import get_logger
+
+
+def test_default_logger_singleton():
+    """Test that the default logger returns the same instance on repeated calls."""
+    logger1 = get_logger()
+    logger2 = get_logger()
+    assert logger1 is logger2, "Default logger should be a singleton"
+
+
+def test_different_loggers():
+    """Ensure that providing different names results in different logger instances."""
+    logger1 = get_logger(name="logger1")
+    logger2 = get_logger(name="logger2")
+    assert (
+        logger1 is not logger2
+    ), "Different names should produce different loggers"
+    assert logger1.name == "logger1"
+
+    assert logger2.name == "logger2"
+
+
+def test_log_file_output(tmp_path):
+    """Test actual file output."""
+    d = tmp_path / "sub"
+    d.mkdir()
+    log_file = d / "test2.log"
+
+    logger = get_logger(name="outputTest", log_file=str(log_file))
+    test_message = "This is a test message for file output."
+    logger.info(test_message)
+
+    # Verify the output to the file
+    with open(log_file, 'r') as file:
+        content = file.read()
+        assert test_message in content
