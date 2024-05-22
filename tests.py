@@ -382,3 +382,5 @@ def test_htime(ms, single_str):
 
     ht = HTime(ms)
     assert single_str in ht.single_str
+
+    assert str(ht) == ht.single_str
