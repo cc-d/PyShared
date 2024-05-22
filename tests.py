@@ -18,6 +18,8 @@ from .pyshared.python import (
     ranstr,
     safe_repr,
     truncstr,
+    HumanTime as HTime,
+    htime,
     tmp_pythonpath,
 )
 from .pyshared.shell import runcmd
@@ -359,3 +361,24 @@ def test_log_file_output(tmp_path):
     with open(log_file, 'r') as file:
         content = file.read()
         assert test_message in content
+
+
+# htime
+
+
+@pt.mark.parametrize(
+    'ms, single_str',
+    [
+        (0, '0ms'),
+        (1, '1ms'),
+        (1000, '1s'),
+        (998, '998ms'),
+        (5900, '5.9s'),
+        (60000, '1m'),
+        (3600000, '1h'),
+    ],
+)
+def test_htime(ms, single_str):
+
+    ht = HTime(ms)
+    assert single_str in ht.single_str

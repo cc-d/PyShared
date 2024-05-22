@@ -1,6 +1,8 @@
 import os
 import os.path as op
 import sys
+import datetime as DT
+from decimal import Decimal as D
 from contextlib import contextmanager
 from importlib import import_module, reload
 from pathlib import Path
@@ -47,14 +49,12 @@ def ranstr(
     as_generator: bool = False,
 ) -> Union[Gen, str]:
     """Generates str with random chars between min and max length
-    Args:
-        min_length (int) = 16: The length of the string.
-        max_length (Optional[int]): The maximum length of the string.
-            If None, min_length is used with no variance on ranstr len
-        chars (Iterable = ALPHANUMERIC_CHARS): Characters used for random str
-        as_generator (bool) = False: Return a generator instead of a string
-    Returns:
-        Generator | str: The random str or generator for random str
+    ~min_length (int) = 16: The length of the string.
+    ~max_length (Optional[int]): The maximum length of the string.
+         If None, min_length is used with no variance on ranstr len
+    ~chars (Iterable = ALPHANUMERIC_CHARS): Characters used for random str
+    ~as_generator (bool) = False: Return a generator instead of a string
+    -> Generator | str: The random str or generator for random str
     """
     str_len = min_len if max_len is None else randint(min_len, max_len)
 
@@ -94,21 +94,20 @@ def default_repr(
     This representation is constructed such that the object can be
     reconstructed from the returned string, ideally. Complex objects
     may not be able to be reconstructed.
-    Args:
-        use_eval_format (bool): If True, the repr will always be formatted as
-            as "Name(attr=value)" instead of "<Name attr=value>" or the
-            user-defined repr_format.
-        obj (Any): The input Python object.
-        attrs_join (str): The string to join the attributes with.
-            Default: ", "
-        attrs_format (str): The format string to use for each attribute.
-            Default: "{attr_name}={attr_repr}"
-        repr_format (str): The format string to use for the object repr.
-            Default: "<{obj_name} {attributes}>"
-        exclude_attrs (Optional[Iterable[str]]): A list names of attributes
-            to exclude from the repr.
-    Returns:
-        str: The string representation of the object.
+    ~use_eval_format (bool): If True, the repr will always be formatted as
+        as "Name(attr=value)" instead of "<Name attr=value>" or the
+        user-defined repr_format.
+    ~obj (Any): The input Python object.
+
+    ~attrs_join (str): The string to join the attributes with.
+        Default: ", "
+    ~attrs_format (str): The format string to use for each attribute.
+        Default: "{attr_name}={attr_repr}"
+    ~repr_format (str): The format string to use for the object repr.
+        Default: "<{obj_name} {attributes}>"
+    ~exclude_attrs (Optional[Iterable[str]]): A list names of attributes
+        to exclude from the repr.
+    -> str: The string representation of the object.
     """
     exclude_attrs = exclude_attrs or []
     if use_eval_format:
@@ -147,16 +146,11 @@ def truncstr(
     end_chars: Opt[int] = None,
 ) -> str:
     """Truncates a string using a provided ellipsis string.
-    Args:
-        text (str): The str to truncate.
-        ellipsis (str): The ellipsis string to use.
-            Default: '...'
-        start_chars (int): The number of visible chars at start of str
-            Default: 3
-        end_chars (Optional[int]): The number of visible chars at end of str
-            Default: None
-    Returns:
-        str: The truncated string.
+    ~text (str): The str to truncate.
+    ~start_chars (int): The number of visible chars at start of str.
+    ~ellipsis (str): The ellipsis string to use. Default is '...'.
+    ~end_chars (Optional[int]): The number of visible chars at end of str. Default is None.
+    -> str: The truncated string.
     """
     text = str(text)
     # backwards compatability
@@ -167,3 +161,78 @@ def truncstr(
     str_start = text[:start_chars]
     str_end = text[-end_chars:] if end_chars else ''
     return str_start + ellipsis + str_end
+
+
+_TYPE_HTIME = Union[int, float, D, str]
+
+
+class HumanTime:
+    incs = ['ms', 's', 'm', 'h', 'd']
+    active = {k: None for k in incs}
+
+    def _populate(self, ms: _TYPE_HTIME) -> None:
+        self.ms = D(str(ms)) if not isinstance(ms, D) else ms
+        if self.ms < 10000:
+            self.active['ms'] = self.ms
+
+        self.s = self.ms / D('1000')
+
+        if self.s < 60:
+            self.active['s'] = self.s
+
+        self.m = self.s / D('60')
+
+        if self.m < 60:
+            self.active['m'] = self.m
+
+        self.h = self.m / D('60')
+
+        if self.h < 100:
+            self.active['h'] = self.h
+
+        self.d = self.h / D('24')
+
+        self.active['d'] = self.d
+
+    def __init__(self, ms: _TYPE_HTIME):
+
+        if isinstance(ms, str):
+            if ms.endswith('ms'):
+                ms = ms.strip().rstrip('ms')
+        else:
+            ms = D(str(ms)) if not isinstance(ms, D) else ms
+
+        self._populate(ms)
+
+    @property
+    def single_str(self) -> str:
+        if self.ms == 0:
+            return '0ms'
+
+        fstr = ''
+        for k in self.incs:
+            if self.active[k]:
+                fstr += f'{self.active[k]}{k} '
+
+        return fstr
+
+    def __str__(self):
+        return self.single_str
+
+    def __repr__(self):
+        return self.single_str
+
+    @property
+    def last(self) -> str:
+        return getattr(self, self.active)
+
+
+def htime(ms: _TYPE_HTIME) -> str:
+    """Converts any time to human readable time (ms, s, m, h, d)
+    ~ms: The time in milliseconds.
+    -> str: The human readable time.
+       HumanTime object is also returned for further use.
+    """
+    if isinstance(ms, str):
+        ms = ms.strip().rstrip('ms')
+    return HumanTime(ms)
