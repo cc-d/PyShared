@@ -2,20 +2,23 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Pytest",
-      "type": "python",
+      "name": "Pytest Custom",
+
       "request": "launch",
-      "module": "pytest",
+      "program": "${workspaceFolder}/tests.py",
+      "console": "integratedTerminal",
       "args": [
-        "--cov=pyshared",
-        "--cov-report=term-missing",
-        "--cov-report=html",
-        "-vv",
+        "-v",
         "-s",
-        "--full-trace",
-        "tests.py"
+        "-x",
+        "--pdb",
+        "--pdbcls=IPython.terminal.debugger:TerminalPdb",
+        "--color=yes",
+        "--disable-warnings"
       ],
-      "console": "integratedTerminal"
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
     }
   ]
 }

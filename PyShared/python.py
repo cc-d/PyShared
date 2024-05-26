@@ -13,7 +13,11 @@ from typing import (
     Iterator,
     Optional as Opt,
     Union,
+    Union as U,
     Any,
+    List,
+    Tuple,
+    Dict,
 )
 
 from .consts import ALPHANUMERIC_CHARS, ALPHANUMERIC_EXT_CHARS
@@ -173,26 +177,27 @@ class HumanTime:
     def _populate(self, ms: _TYPE_HTIME) -> None:
         self.ms = D(str(ms)) if not isinstance(ms, D) else ms
         if self.ms < 10000:
-            self.active['ms'] = self.ms
+            self.active['ms'] = self.ms.quantize(D('1.00'))
 
-        self.s = self.ms / D('1000')
+        self.s = self.ms / D('1000').quantize(D('1.00'))
 
-        if self.s < 60:
-            self.active['s'] = self.s
+        if self.s < 60 and self.s > 0.1:
+            self.active['s'] = self.s.quantize(D('1.00'))
 
         self.m = self.s / D('60')
 
-        if self.m < 60:
-            self.active['m'] = self.m
+        if self.m < 60 and self.m > 0.1:
+            self.active['m'] = self.m.quantize(D('1.00'))
 
         self.h = self.m / D('60')
 
-        if self.h < 100:
-            self.active['h'] = self.h
+        if self.h < 100 and self.h > 0.1:
+            self.active['h'] = self.h.quantize(D('1.00'))
 
         self.d = self.h / D('24')
 
-        self.active['d'] = self.d
+        if self.d > 1:
+            self.active['d'] = self.d.quantize(D('1.00'))
 
     def __init__(self, ms: _TYPE_HTIME):
 
@@ -210,11 +215,14 @@ class HumanTime:
             return '0ms'
 
         fstr = ''
-        for k in self.incs:
-            if self.active[k]:
-                fstr += f'{self.active[k]}{k} '
+        for inc in self.incs:
+            if self.active[inc] is not None:
+                atxt = str(self.active[inc])
+                if atxt.endswith('.00'):
+                    atxt = atxt[:-3]
+                fstr += f'{atxt}{inc} '
 
-        return fstr
+        return fstr.rstrip()
 
     def __str__(self):
         return self.single_str
@@ -228,7 +236,7 @@ class HumanTime:
 
 
 def htime(ms: _TYPE_HTIME) -> str:
-    """Converts any time to human readable time (ms, s, m, h, d)
+    """Converts any time git to human readable time (ms, s, m, h, d)
     ~ms: The time in milliseconds.
     -> str: The human readable time.
        HumanTime object is also returned for further use.
@@ -236,3 +244,71 @@ def htime(ms: _TYPE_HTIME) -> str:
     if isinstance(ms, str):
         ms = ms.strip().rstrip('ms')
     return HumanTime(ms)
+
+
+_ULISTS = U[List, 'UniqueList']
+
+
+class UniqueList(list):
+    """A list that only allows unique values to be added."""
+
+    def __init__(self, *args, **kwargs):
+        items = set()
+        for i in args:
+            if hasattr(i, '__iter__'):
+                items.update(i)
+            else:
+                items.add(i)
+        super().__init__(items, **kwargs)
+
+    def append(self, i: Any) -> bool:
+        """Append an item to the list if it is not already in the list.
+        ~i: The item to append.
+        -> bool: True if the item was appended, False if not.
+        """
+        for item in self:
+            if item.__class__ == i.__class__ and item == i:
+                return False
+
+        super().append(i)
+        return True
+
+    def extend(self, items: Iterable) -> int:
+        """Extend the list with unique values.
+        ~items: The items to extend the list with.
+        -> int: The number of items that were appended.
+        """
+        appended = 0
+        for i in items:
+            if self.append(i):
+                appended += 1
+        return appended
+
+    def __add__(self, other: _ULISTS) -> 'UniqueList':
+        """Add two UniqueList objects together."""
+        new_list = UniqueList()
+        for i in self:
+            new_list.append(i)
+        for i in other:
+            new_list.append(i)
+        return new_list
+
+    def __iadd__(self, other: _ULISTS) -> 'UniqueList':
+        """Add another list to this list."""
+        self.extend(other)
+        return self
+
+    def __repr__(self):
+        return super().__repr__()
+
+    def __str__(self):
+        return super().__str__()
+
+    def __getitem__(self, idx: int) -> Any:
+        return super().__getitem__(idx)
+
+    def __setitem__(self, idx: int, value: Any) -> bool:
+        if value in self:
+            return False
+        super().__setitem__(idx, value)
+        return True

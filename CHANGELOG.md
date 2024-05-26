@@ -1,3 +1,7 @@
+## 1.7.0
+
+added uniquelist class and tests
+
 ## 1.6.0
 
 added htime to imports and updated the version of htime to 1.0.0

@@ -1,4 +1,5 @@
 import os
+import os.path as op
 import random as ran
 import re
 import sys
@@ -8,12 +9,13 @@ from unittest.mock import patch, MagicMock
 
 import pytest as pt
 
-from .pyshared import ALPHANUMERIC_CHARS, ALPHANUMERIC_EXT_CHARS
-from .pyshared import RanData
-from .pyshared.crypto import is_jwt
-from .pyshared.env import typed_evar
-from .pyshared.exceptions import NotPrintableError
-from .pyshared.python import (
+
+from pyshared import ALPHANUMERIC_CHARS, ALPHANUMERIC_EXT_CHARS
+from pyshared import RanData
+from pyshared.crypto import is_jwt
+from pyshared.env import typed_evar
+from pyshared.exceptions import NotPrintableError
+from pyshared.python import (
     default_repr,
     ranstr,
     safe_repr,
@@ -21,10 +23,12 @@ from .pyshared.python import (
     HumanTime as HTime,
     htime,
     tmp_pythonpath,
+    UniqueList as UList,
 )
-from .pyshared.shell import runcmd
-from .pyshared.terminal import get_terminal_width, print_columns, print_middle
-from .pyshared.pytest import multiscope_fixture
+from pyshared.shell import runcmd
+from pyshared.terminal import get_terminal_width, print_columns, print_middle
+from pyshared.pytest import multiscope_fixture
+from pyshared import D
 
 
 ##### consts.py #####
@@ -325,7 +329,7 @@ def test_tmp_pythonpath(tmppath, curpath, expected, strict):
 
 # Import the module/script where get_logger is defined
 
-from .pyshared.log import get_logger
+from pyshared.log import get_logger
 
 
 def test_default_logger_singleton():
@@ -373,7 +377,7 @@ def test_log_file_output(tmp_path):
         (1, '1ms'),
         (1000, '1s'),
         (998, '998ms'),
-        (5900, '5.9s'),
+        (5900, ('5.90s', '5900ms')),
         (60000, '1m'),
         (3600000, '1h'),
     ],
@@ -381,6 +385,102 @@ def test_log_file_output(tmp_path):
 def test_htime(ms, single_str):
 
     ht = HTime(ms)
-    assert single_str in ht.single_str
+    if isinstance(single_str, tuple):
+        for s in single_str:
+            assert s in str(ht)
+    else:
+        assert single_str in str(ht)
 
-    assert str(ht) == ht.single_str
+
+@pt.mark.parametrize(
+    'ulmeth, argsreturn',
+    [
+        ('append', ((1,), (True,))),
+        ('append', ((1, 1, 1, 1), (True, False, False, False))),
+        (
+            'append',
+            ((1, '1', D('1'), 1.0, '1.0'), (True, True, True, True, True)),
+        ),
+        ('extend', ([1, 2, 3], 3)),
+        ('extend', ([1 for _ in range(100)], 1)),
+        ('extend', ([1, '1', D('1'), 1.0, '1.0'], 5)),
+        ('__add__', (([1, 2, 3], [4, 5, 6]), [1, 2, 3, 4, 5, 6])),
+        ('__add__', (([1, 2, 3], [1, 2, 3, 4]), [1, 2, 3, 4])),
+        ('__add__', (([], []), [])),
+        ('__add__', (([1, 2, 3], [], [0, 0, 0]), [1, 2, 3, 0])),
+        ('__iadd__', (([1, 2, 3], [4, 5, 6]), [1, 2, 3, 4, 5, 6])),
+        ('__iadd__', (([1, 2, 3], [1, 2, 3, 4]), [1, 2, 3, 4])),
+        ('__iadd__', (([], []), [])),
+        ('__iadd__', (([1, 2, 3], [], [0, 0, 0]), [1, 2, 3, 0])),
+        ('__iadd__', (([1], []), [1])),
+        ('__iadd__', (([], [], [], [4]), [4])),
+        ('__repr__', (([1, 2, 3],), repr([1, 2, 3]))),
+        ('__str__', (([1, 2, 3],), str([1, 2, 3]))),
+        ('__len__', (([1, 2, 3],), 3)),
+        ('__len__', (([],), 0)),
+        ('__getitem__', (([1, 2, 3], 1), 2)),
+        ('__getitem__', (([1, 2, 3], slice(1, 3)), [2, 3])),
+        ('__getitem__', (([1, 2, 3], slice(1, 3, 2)), [2])),
+        ('__setitem__', (([1, 2, 3], 1, 4), [1, 4, 3])),
+        ('__setitem__', (([1, 1, 1], 1, 1, 1), [1])),
+        ('__init__', ([1, 2, 3], [1, 2, 3])),
+        ('__init__', ((1, 2, 3), [1, 2, 3])),
+        ('__init__', ({1, 2, 3}, [1, 2, 3])),
+    ],
+)
+def test_ulist_meths(ulmeth: str, argsreturn: tuple):
+    ul = UList()
+    if ulmeth == 'append':
+        for a, r in zip(*argsreturn):
+            meth = getattr(ul, ulmeth)
+            mr = meth(a)
+            assert mr == r
+    elif ulmeth == 'extend':
+        meth = getattr(ul, ulmeth)
+        mr = meth(argsreturn[0])
+        assert mr == argsreturn[1]
+        assert len(ul) == argsreturn[1]
+    elif ulmeth == '__add__':
+        addlists = [list(a) for a in argsreturn[0]]
+        newlist = UList()
+        while addlists:
+            newlist = newlist + addlists.pop(0)
+        assert newlist == argsreturn[1]
+    elif ulmeth == '__iadd__':
+        addlists = [list(a) for a in argsreturn[0]]
+        newlist = UList()
+        while addlists:
+            newlist += addlists.pop(0)
+        assert newlist == argsreturn[1]
+    elif ulmeth == '__repr__':
+        nl = UList(argsreturn[0][0])
+        assert repr(nl) == argsreturn[1]
+    elif ulmeth == '__str__':
+        nl = UList(argsreturn[0][0])
+        assert str(nl) == argsreturn[1]
+    elif ulmeth == '__getitem__':
+        nl = UList(argsreturn[0][0])
+        assert nl[argsreturn[0][1]] == argsreturn[1]
+    elif ulmeth == '__setitem__':
+        nl = UList(argsreturn[0][0])
+        nl[argsreturn[0][1]] = argsreturn[0][2]
+        assert nl == argsreturn[1]
+    elif ulmeth == '__init__':
+        nl = UList(argsreturn[0])
+        assert nl == argsreturn[1]
+
+
+ptopts = [
+    "-vv",
+    "-s",
+    "--tb=short",
+    "--color=yes",
+    "--disable-warnings",
+    '-k test_ulist',
+]
+
+if __name__ == '__main__':
+    print('running tests')
+    ulano = test_ulist_meths.__annotations__
+
+    pt.main(ptopts)
