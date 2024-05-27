@@ -4,6 +4,10 @@ added more tests for uniquelist type
 
 lots of edgecase tests for uniquelist. work in progress
 
+changed uniquelist behaviour some
+
+added warning to uniquelist explaining edgecase behaviour
+
 ## 1.6.0
 
 pypi versioning
