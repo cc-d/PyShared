@@ -409,6 +409,7 @@ a = 'test'
     'ulmeth, argsreturn',
     [
         ('append', ((a, a), (True, False))),
+        ('append', (([1], [2], [2]), (True, True, False))),
         ('append', ((1,), (True,))),
         ('append', ((1, 1, 1, 1), (True, False, False, False))),
         (
@@ -441,14 +442,27 @@ a = 'test'
         ('__init__', ([1, 2, 3], [1, 2, 3])),
         ('__init__', ((1, 2, 3), [1, 2, 3])),
         ('__init__', ({1, 2, 3}, [1, 2, 3])),
+        (
+            '__init__',
+            (UList([[1], [1], [1, [1]]]) + UList([2]), 'u[[1], [1, [1]], 2]'),
+        ),
+        (
+            'expr',
+            (
+                UList([1] + [2]) + [3, [4]] + UList([5, 6]),
+                'u[1, 2, 3, [4], 5, 6]',
+            ),
+        ),
     ],
 )
 def test_ulist_meths(ulmeth: str, argsreturn: tuple):
     ul = UList()
     if ulmeth == 'append':
         for a, r in zip(*argsreturn):
+            print('b4', ul, a, r, argsreturn)
             mr = ul.append(a)
-            print(mr, r, ul, a)
+            print('af', ul, a, r, argsreturn)
+            print(mr, r, ul, a, argsreturn)
             assert mr == r
     elif ulmeth == 'extend':
         meth = getattr(ul, ulmeth)
@@ -481,8 +495,14 @@ def test_ulist_meths(ulmeth: str, argsreturn: tuple):
         nl[argsreturn[0][1]] = argsreturn[0][2]
         assert nl == argsreturn[1]
     elif ulmeth == '__init__':
-        nl = UList(argsreturn[0])
-        assert nl == argsreturn[1]
+        if not isinstance(argsreturn[0], UList):
+            nl = UList(argsreturn[0])
+            assert nl == argsreturn[1]
+        elif isinstance(argsreturn[0], UList):
+            assert str(argsreturn[0]) == argsreturn[1]
+    elif ulmeth == 'expr':
+        ul = argsreturn[0]
+        assert str(ul) == argsreturn[1]
 
 
 ptopts = [

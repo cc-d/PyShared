@@ -1,3 +1,9 @@
+## 1.6.1
+
+added more tests for uniquelist type
+
+lots of edgecase tests for uniquelist. work in progress
+
 ## 1.6.0
 
 pypi versioning

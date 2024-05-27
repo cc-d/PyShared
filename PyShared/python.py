@@ -250,17 +250,23 @@ def htime(ms: _TYPE_HTIME) -> str:
 _ULISTS = U[List, 'UniqueList']
 
 
-class UniqueList(list):
-    """A list that only allows unique values to be added."""
+class _DEFAULT_ARG:
+    pass
 
-    def __init__(self, *args, **kwargs):
-        items = set()
-        for i in args:
-            if hasattr(i, '__iter__'):
-                items.update(i)
-            else:
-                items.add(i)
-        super().__init__(items, **kwargs)
+
+class UniqueList(list):
+    """A list that only allows unique values to be added.
+    Not all edge cases are covered, but it should work for most cases.
+    """
+
+    def __init__(self, item: Opt[Any] = _DEFAULT_ARG()):
+        super().__init__()
+
+        if hasattr(item, '__iter__'):
+            for i in item:
+                self.append(i)
+        elif not isinstance(item, _DEFAULT_ARG):
+            self.append(item)
 
     def append(self, i: Any) -> bool:
         """Append an item to the list if it is not already in the list.
@@ -274,24 +280,61 @@ class UniqueList(list):
 
         for item in self:
             if i is item:
-                return False
-            if i.__class__ == item.__class__:
-                identical = 0
 
+                return False
+
+            if i.__class__ == item.__class__:
+                score = 0
+
+                if hasattr(i, '__dict__') and hasattr(item, '__dict__'):
+                    if i.__dict__ == item.__dict__:
+                        return False
                 try:
                     if dumps(i) == dumps(item):
                         return False
                 except Exception:
                     pass
 
-                if hasattr(i, '__dict__') and hasattr(item, '__dict__'):
-                    if i.__dict__ == item.__dict__:
+                if hasattr(i, '__dir__') and hasattr(item, '__dir__'):
+                    if all(
+                        getattr(i, attr) == getattr(item, attr)
+                        for attr in dir(i)
+                    ):
                         return False
+                    else:
+                        continue
 
                 if i == item:
-                    identical += 1
+                    return False
 
-                if identical >= 3:
+                if hasattr(i, '__sizeof__') and hasattr(item, '__sizeof__'):
+                    if i.__sizeof__() == item.__sizeof__():
+                        score += 1
+                    else:
+                        continue
+
+                if hasattr(i, '__hash__') and hasattr(item, '__hash__'):
+                    try:
+                        if hash(i) == hash(item):
+                            score += 1
+                        else:
+                            continue
+                    except Exception:
+                        pass
+
+                if hasattr(i, '__repr__') and hasattr(item, '__repr__'):
+                    if repr(i) == repr(item):
+                        score += 1
+                    else:
+                        continue
+
+                if hasattr(i, '__str__') and hasattr(item, '__str__'):
+                    if str(i) == str(item):
+                        score += 1
+                    else:
+                        continue
+
+                if score >= 4:
                     return False
 
         super().append(i)
@@ -313,8 +356,11 @@ class UniqueList(list):
         new_list = UniqueList()
         for i in self:
             new_list.append(i)
-        for i in other:
-            new_list.append(i)
+        if hasattr(other, '__iter__'):
+            for i in other:
+                new_list.append(i)
+        else:
+            new_list.append(other)
         return new_list
 
     def __iadd__(self, other: _ULISTS) -> 'UniqueList':
