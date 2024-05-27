@@ -392,15 +392,30 @@ def test_htime(ms, single_str):
         assert single_str in str(ht)
 
 
+class tstr(str):
+    def __init__(self, *args):
+        from random import randint
+
+        self.rand = randint(0, 9999999999999999)
+        super().__init__()
+
+
+s1 = tstr('tstr')
+s2 = tstr('tstr')
+a = 'test'
+
+
 @pt.mark.parametrize(
     'ulmeth, argsreturn',
     [
+        ('append', ((a, a), (True, False))),
         ('append', ((1,), (True,))),
         ('append', ((1, 1, 1, 1), (True, False, False, False))),
         (
             'append',
             ((1, '1', D('1'), 1.0, '1.0'), (True, True, True, True, True)),
         ),
+        ('append', ((s1, s2), (True, True))),
         ('extend', ([1, 2, 3], 3)),
         ('extend', ([1 for _ in range(100)], 1)),
         ('extend', ([1, '1', D('1'), 1.0, '1.0'], 5)),
@@ -414,8 +429,8 @@ def test_htime(ms, single_str):
         ('__iadd__', (([1, 2, 3], [], [0, 0, 0]), [1, 2, 3, 0])),
         ('__iadd__', (([1], []), [1])),
         ('__iadd__', (([], [], [], [4]), [4])),
-        ('__repr__', (([1, 2, 3],), repr([1, 2, 3]))),
-        ('__str__', (([1, 2, 3],), str([1, 2, 3]))),
+        ('__repr__', (([1, 2, 3],), 'u' + repr([1, 2, 3]))),
+        ('__str__', ([1, 2, 3], 'u[1, 2, 3]')),
         ('__len__', (([1, 2, 3],), 3)),
         ('__len__', (([],), 0)),
         ('__getitem__', (([1, 2, 3], 1), 2)),
@@ -432,8 +447,8 @@ def test_ulist_meths(ulmeth: str, argsreturn: tuple):
     ul = UList()
     if ulmeth == 'append':
         for a, r in zip(*argsreturn):
-            meth = getattr(ul, ulmeth)
-            mr = meth(a)
+            mr = ul.append(a)
+            print(mr, r, ul, a)
             assert mr == r
     elif ulmeth == 'extend':
         meth = getattr(ul, ulmeth)
@@ -456,7 +471,7 @@ def test_ulist_meths(ulmeth: str, argsreturn: tuple):
         nl = UList(argsreturn[0][0])
         assert repr(nl) == argsreturn[1]
     elif ulmeth == '__str__':
-        nl = UList(argsreturn[0][0])
+        nl = UList(argsreturn[0])
         assert str(nl) == argsreturn[1]
     elif ulmeth == '__getitem__':
         nl = UList(argsreturn[0][0])
@@ -476,11 +491,11 @@ ptopts = [
     "--tb=short",
     "--color=yes",
     "--disable-warnings",
-    '-k test_ulist',
+    '-k test_ulist_',
 ]
 
 if __name__ == '__main__':
     print('running tests')
-    ulano = test_ulist_meths.__annotations__
-
-    pt.main(ptopts)
+    ul = UList()
+    ul = ul + [0, 0, 0, 0, 1] + [0, 0]
+    print(ul)

@@ -69,9 +69,13 @@ Examples: (input, default, type, expected_output)
 
 ### `python.py`
 
+- `HumanTime`: A class for converting seconds to human-readable time strings.
+- `UniqueList`: A list that only allows unique elements.
+- `default_repr`: Generates a default representation for custom objects.
+- `htime`: A function for converting seconds to human-readable time strings.
 - `ranstr`: Creates random strings of specified length and character set.
 - `safe_repr`: Safely returns the object's repr/str or an error string without throwing exceptions if the object is not printable.
-- `default_repr`: Generates a default representation for custom objects.
+- `tmp_pythonpath`: Adds a temporary directory to the Python path for the duration of a context manager.
 - `truncstr`: Truncates a string, preserving a portion from the start and/or end.
 
 ### `pytest.py`

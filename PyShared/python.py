@@ -2,6 +2,7 @@ import os
 import os.path as op
 import sys
 import datetime as DT
+from pickle import dumps
 from decimal import Decimal as D
 from contextlib import contextmanager
 from importlib import import_module, reload
@@ -266,9 +267,32 @@ class UniqueList(list):
         ~i: The item to append.
         -> bool: True if the item was appended, False if not.
         """
+
+        # This is overly complex, but it's necessary to avoid false positives
+        # when comparing objects that are not hashable. Probably a better way
+        # to do this, but it works for now, seemingly.
+
         for item in self:
-            if item.__class__ == i.__class__ and item == i:
+            if i is item:
                 return False
+            if i.__class__ == item.__class__:
+                identical = 0
+
+                try:
+                    if dumps(i) == dumps(item):
+                        return False
+                except Exception:
+                    pass
+
+                if hasattr(i, '__dict__') and hasattr(item, '__dict__'):
+                    if i.__dict__ == item.__dict__:
+                        return False
+
+                if i == item:
+                    identical += 1
+
+                if identical >= 3:
+                    return False
 
         super().append(i)
         return True
@@ -299,10 +323,11 @@ class UniqueList(list):
         return self
 
     def __repr__(self):
-        return super().__repr__()
+        s = super().__repr__()
+        return 'u' + s
 
     def __str__(self):
-        return super().__str__()
+        return self.__repr__()
 
     def __getitem__(self, idx: int) -> Any:
         return super().__getitem__(idx)

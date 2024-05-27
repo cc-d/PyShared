@@ -2,23 +2,11 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Pytest Custom",
-
+      "name": "Python Debugger: Current File",
+      "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/tests.py",
-      "console": "integratedTerminal",
-      "args": [
-        "-v",
-        "-s",
-        "-x",
-        "--pdb",
-        "--pdbcls=IPython.terminal.debugger:TerminalPdb",
-        "--color=yes",
-        "--disable-warnings"
-      ],
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}"
-      }
+      "program": "${file}",
+      "console": "integratedTerminal"
     }
   ]
 }
