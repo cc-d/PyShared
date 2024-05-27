@@ -1,4 +1,6 @@
-## 1.5.11
+## 1.6.0
+
+pypi versioning
 
 added uniquelist class and tests
 
