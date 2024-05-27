@@ -1,8 +1,10 @@
-## 1.5.10
+## 1.5.11
 
 added uniquelist class and tests
 
 updated documentation
+
+changed 1.5.10 to 1.5.11 for version conflicts
 
 ## 1.5.9
 
