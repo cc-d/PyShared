@@ -1,6 +1,8 @@
+import os
+import os.path as op
 import pytest as pt
 import inspect
-import random as ran
+from .python import ranstr
 
 from typing import Callable as Call
 
@@ -25,3 +27,15 @@ def multiscope_fixture(func: Call):
     # Update the function to be the one decorated for function scope
     func = caller_globals[f'{func.__name__}_function']
     return func
+
+
+@pt.fixture
+def tmpdir():
+    """Creates a dir in /tmp/ with a random unique name, will delete after
+    yielding the new dir path
+    """
+    name = ranstr(min_length=15)
+    tdir = op.join('/tmp', name)
+    os.mkdir(tdir)
+    yield tdir
+    os.rmdir(tdir)

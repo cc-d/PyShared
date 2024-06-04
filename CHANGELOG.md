@@ -1,3 +1,7 @@
+## 1.6.2
+
+added pytest tmpdir
+
 ## 1.6.1
 
 added more tests for uniquelist type

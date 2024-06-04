@@ -10,12 +10,12 @@ from unittest.mock import patch, MagicMock
 import pytest as pt
 
 
-from pyshared import ALPHANUMERIC_CHARS, ALPHANUMERIC_EXT_CHARS
-from pyshared import RanData
-from pyshared.crypto import is_jwt
-from pyshared.env import typed_evar
-from pyshared.exceptions import NotPrintableError
-from pyshared.python import (
+from .pyshared import ALPHANUMERIC_CHARS, ALPHANUMERIC_EXT_CHARS
+from .pyshared import RanData
+from .pyshared.crypto import is_jwt
+from .pyshared.env import typed_evar
+from .pyshared.exceptions import NotPrintableError
+from .pyshared.python import (
     default_repr,
     ranstr,
     safe_repr,
@@ -25,10 +25,10 @@ from pyshared.python import (
     tmp_pythonpath,
     UniqueList as UList,
 )
-from pyshared.shell import runcmd
-from pyshared.terminal import get_terminal_width, print_columns, print_middle
-from pyshared.pytest import multiscope_fixture
-from pyshared import D
+from .pyshared.shell import runcmd
+from .pyshared.terminal import get_terminal_width, print_columns, print_middle
+from .pyshared.pytest import multiscope_fixture, tmpdir
+from .pyshared import D
 
 
 ##### consts.py #####
@@ -329,7 +329,7 @@ def test_tmp_pythonpath(tmppath, curpath, expected, strict):
 
 # Import the module/script where get_logger is defined
 
-from pyshared.log import get_logger
+from .pyshared.log import get_logger
 
 
 def test_default_logger_singleton():
@@ -505,6 +505,16 @@ def test_ulist_meths(ulmeth: str, argsreturn: tuple):
         assert str(ul) == argsreturn[1]
 
 
+def test_tmpdir():
+    tdname = ''
+
+    def f(tmpdir):
+        assert op.exists(tmpdir)
+        tdname = tmpdir
+
+    assert not op.exists(tdname)
+
+
 ptopts = [
     "-vv",
     "-s",
@@ -513,9 +523,3 @@ ptopts = [
     "--disable-warnings",
     '-k test_ulist_',
 ]
-
-if __name__ == '__main__':
-    print('running tests')
-    ul = UList()
-    ul = ul + [0, 0, 0, 0, 1] + [0, 0]
-    print(ul)
